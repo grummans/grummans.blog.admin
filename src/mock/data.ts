@@ -10,10 +10,12 @@ export interface Post {
   createdAt: string
   updatedAt: string
   author: Author
-  categories: Category[]
+  category: Category | null
   tags: Tag[]
   views: number
   readingTime: number
+  metaTitle?: string
+  metaDescription?: string
 }
 
 export interface Author {
@@ -100,7 +102,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-11-04T10:00:00Z',
     updatedAt: '2025-11-05T10:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[0]],
+    category: mockCategories[0]!,
     tags: [mockTags[0], mockTags[1], mockTags[3]],
     views: 1250,
     readingTime: 5,
@@ -117,7 +119,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-11-02T14:30:00Z',
     updatedAt: '2025-11-03T14:30:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[0]],
+    category: mockCategories[0]!,
     tags: [mockTags[2], mockTags[3], mockTags[4]],
     views: 856,
     readingTime: 7,
@@ -134,7 +136,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-31T09:00:00Z',
     updatedAt: '2025-11-01T09:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[1]],
+    category: mockCategories[1]!,
     tags: [mockTags[4]],
     views: 2340,
     readingTime: 4,
@@ -151,7 +153,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-30T15:00:00Z',
     updatedAt: '2025-11-06T11:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[2]],
+    category: mockCategories[2]!,
     tags: [],
     views: 0,
     readingTime: 12,
@@ -168,7 +170,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-11-05T16:00:00Z',
     updatedAt: '2025-11-06T10:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[3]],
+    category: mockCategories[3]!,
     tags: [],
     views: 0,
     readingTime: 6,
@@ -185,7 +187,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-27T11:00:00Z',
     updatedAt: '2025-10-28T11:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[0]],
+    category: mockCategories[0]!,
     tags: [mockTags[2], mockTags[3]],
     views: 1580,
     readingTime: 8,
@@ -202,7 +204,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-24T07:30:00Z',
     updatedAt: '2025-10-25T07:30:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[3]],
+    category: mockCategories[3]!,
     tags: [mockTags[4]],
     views: 920,
     readingTime: 5,
@@ -219,7 +221,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-21T13:00:00Z',
     updatedAt: '2025-10-22T13:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[2]],
+    category: mockCategories[2]!,
     tags: [],
     views: 3150,
     readingTime: 10,
@@ -236,7 +238,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-19T15:30:00Z',
     updatedAt: '2025-10-20T15:30:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[0]],
+    category: mockCategories[0]!,
     tags: [mockTags[0], mockTags[3]],
     views: 2100,
     readingTime: 9,
@@ -253,7 +255,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-17T09:00:00Z',
     updatedAt: '2025-10-18T09:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[1]],
+    category: mockCategories[1]!,
     tags: [mockTags[4]],
     views: 1720,
     readingTime: 6,
@@ -270,7 +272,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-16T10:00:00Z',
     updatedAt: '2025-11-05T14:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[0]],
+    category: mockCategories[0]!,
     tags: [mockTags[0], mockTags[3]],
     views: 0,
     readingTime: 11,
@@ -287,7 +289,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-14T12:00:00Z',
     updatedAt: '2025-10-15T12:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[3]],
+    category: mockCategories[3]!,
     tags: [],
     views: 2890,
     readingTime: 7,
@@ -304,7 +306,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-11T14:30:00Z',
     updatedAt: '2025-10-12T14:30:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[2]],
+    category: mockCategories[2]!,
     tags: [mockTags[4]],
     views: 1450,
     readingTime: 8,
@@ -321,7 +323,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-10T16:00:00Z',
     updatedAt: '2025-11-04T09:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[0]],
+    category: mockCategories[0]!,
     tags: [mockTags[0], mockTags[2], mockTags[3]],
     views: 0,
     readingTime: 12,
@@ -338,7 +340,7 @@ export const mockPosts: Post[] = [
     createdAt: '2025-10-07T11:00:00Z',
     updatedAt: '2025-10-08T11:00:00Z',
     author: mockAuthors[0],
-    categories: [mockCategories[1]],
+    category: mockCategories[1]!,
     tags: [mockTags[4]],
     views: 3420,
     readingTime: 6,

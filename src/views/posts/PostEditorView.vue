@@ -114,24 +114,23 @@
           </div>
         </div>
 
-        <!-- Categories -->
+        <!-- Category -->
         <div class="card">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Categories</h3>
-          <div class="space-y-2">
-            <label
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Category</h3>
+          <select
+            v-model="post.category"
+            class="input text-sm"
+          >
+            <option :value="null">Select category...</option>
+            <option
               v-for="category in categories"
               :key="category.id"
-              class="flex items-center"
+              :value="category"
             >
-              <input
-                type="checkbox"
-                :value="category"
-                v-model="post.categories"
-                class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-              />
-              <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">{{ category.name }}</span>
-            </label>
-          </div>
+              {{ category.name }}
+            </option>
+          </select>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Choose one primary category</p>
         </div>
 
         <!-- Tags -->
@@ -173,17 +172,49 @@
 
         <!-- SEO -->
         <div class="card">
-          <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">SEO</h3>
+          <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">SEO Settings</h3>
           <div class="space-y-3">
             <div>
-              <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Slug</label>
+              <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">URL Slug</label>
               <input
                 v-model="post.slug"
                 type="text"
                 class="input text-sm"
                 placeholder="post-slug"
               />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Auto-generated from title if empty</p>
             </div>
+            
+            <div>
+              <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                Meta Title
+                <span class="text-gray-400">({{ post.metaTitle?.length || 0 }}/255)</span>
+              </label>
+              <input
+                v-model="post.metaTitle"
+                type="text"
+                class="input text-sm"
+                placeholder="Custom SEO title (optional)"
+                maxlength="255"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to use post title</p>
+            </div>
+            
+            <div>
+              <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                Meta Description
+                <span class="text-gray-400">({{ post.metaDescription?.length || 0 }}/320)</span>
+              </label>
+              <textarea
+                v-model="post.metaDescription"
+                rows="3"
+                class="input text-sm resize-none"
+                placeholder="SEO description for search engines (optional)"
+                maxlength="320"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Optimal length: 150-160 characters</p>
+            </div>
+            
             <div>
               <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Reading Time (min)</label>
               <input
@@ -236,10 +267,12 @@ const post = ref<Post>({
     bio: 'Blog administrator',
     role: 'admin',
   },
-  categories: [],
+  category: null,
   tags: [],
   views: 0,
   readingTime: 5,
+  metaTitle: '',
+  metaDescription: '',
 })
 
 const availableTags = computed(() => {
