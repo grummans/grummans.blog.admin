@@ -1,5 +1,29 @@
 <template>
   <div>
+    <!-- Loading State -->
+    <div v-if="loading" class="card text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading post...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error && !isNewPost" class="card bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+      <div class="flex items-start gap-3">
+        <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <h3 class="text-red-800 dark:text-red-200 font-semibold">Error loading post</h3>
+          <p class="text-red-600 dark:text-red-400 text-sm mt-1">{{ error }}</p>
+          <button @click="loadPost" class="mt-3 text-sm text-red-700 dark:text-red-300 hover:underline">
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor Content -->
+    <div v-else>
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between">
       <div class="flex items-center gap-4">
@@ -228,6 +252,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -235,7 +260,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'
-import { mockPosts, mockCategories, mockTags } from '@/mock/data'
+import { postService } from '@/services/postService'
+import { mockCategories, mockTags } from '@/mock/data'
 import type { Post, Category, Tag } from '@/mock/data'
 
 const route = useRoute()
@@ -243,6 +269,8 @@ const router = useRouter()
 
 const isNewPost = computed(() => route.name === 'post-new')
 const saving = ref(false)
+const loading = ref(false)
+const error = ref<string | null>(null)
 const selectedTag = ref('')
 
 const categories = mockCategories
@@ -301,15 +329,54 @@ const addFeaturedImage = () => {
 }
 
 const saveDraft = async () => {
+  if (!post.value.title || !post.value.content) {
+    alert('Please fill in title and content')
+    return
+  }
+
   saving.value = true
+  error.value = null
   post.value.status = 'draft'
   
-  // Simulate API call
-  setTimeout(() => {
-    console.log('Saved draft:', post.value)
+  try {
+    // Auto-generate slug if empty
+    if (!post.value.slug) {
+      post.value.slug = post.value.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    }
+
+    // Prepare data for API
+    const postData = {
+      title: post.value.title,
+      slug: post.value.slug,
+      content: post.value.content,
+      excerpt: post.value.excerpt,
+      featuredImage: post.value.featuredImage,
+      status: 'draft' as const,
+      categoryId: post.value.category?.id || null,
+      tagIds: post.value.tags.map(tag => tag.id),
+      metaTitle: post.value.metaTitle,
+      metaDescription: post.value.metaDescription,
+      readingTime: post.value.readingTime,
+    }
+
+    if (isNewPost.value) {
+      const created = await postService.create(postData)
+      post.value.id = created.id
+      alert('Draft saved successfully!')
+      router.push(`/posts/${created.id}`)
+    } else {
+      await postService.update(post.value.id, postData)
+      alert('Draft saved successfully!')
+    }
+  } catch (err: any) {
+    error.value = err.message || 'Failed to save draft'
+    alert(error.value)
+  } finally {
     saving.value = false
-    alert('Draft saved successfully!')
-  }, 1000)
+  }
 }
 
 const publish = async () => {
@@ -319,38 +386,69 @@ const publish = async () => {
   }
 
   saving.value = true
+  error.value = null
   
-  if (post.value.status !== 'published') {
-    post.value.status = 'published'
-    post.value.publishedAt = new Date().toISOString()
-  }
-  
-  post.value.updatedAt = new Date().toISOString()
-  
-  // Auto-generate slug if empty
-  if (!post.value.slug) {
-    post.value.slug = post.value.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-  }
+  try {
+    // Auto-generate slug if empty
+    if (!post.value.slug) {
+      post.value.slug = post.value.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    }
 
-  // Simulate API call
-  setTimeout(() => {
-    console.log('Published post:', post.value)
-    saving.value = false
-    alert('Post published successfully!')
+    // Prepare data for API
+    const postData = {
+      title: post.value.title,
+      slug: post.value.slug,
+      content: post.value.content,
+      excerpt: post.value.excerpt,
+      featuredImage: post.value.featuredImage,
+      status: 'published' as const,
+      categoryId: post.value.category?.id || null,
+      tagIds: post.value.tags.map(tag => tag.id),
+      metaTitle: post.value.metaTitle,
+      metaDescription: post.value.metaDescription,
+      readingTime: post.value.readingTime,
+    }
+
+    if (isNewPost.value) {
+      await postService.create(postData)
+      alert('Post published successfully!')
+    } else {
+      await postService.update(post.value.id, postData)
+      alert('Post updated successfully!')
+    }
+    
     router.push('/posts')
-  }, 1000)
+  } catch (err: any) {
+    error.value = err.message || 'Failed to publish post'
+    alert(error.value)
+  } finally {
+    saving.value = false
+  }
+}
+
+// Load post data
+const loadPost = async () => {
+  if (isNewPost.value) return
+  
+  loading.value = true
+  error.value = null
+  
+  try {
+    const postId = route.params.id as string
+    const loadedPost = await postService.getById(postId)
+    post.value = { ...loadedPost }
+  } catch (err: any) {
+    error.value = err.message || 'Failed to load post'
+    console.error('Error loading post:', err)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {
-  if (!isNewPost.value) {
-    // Load existing post
-    const existingPost = mockPosts.find(p => p.id === route.params.id)
-    if (existingPost) {
-      post.value = { ...existingPost }
-    }
-  }
+  loadPost()
 })
 </script>

@@ -20,6 +20,7 @@
     "@tiptap/extension-placeholder": "^3.10.2",
     "@tiptap/starter-kit": "^3.10.2",
     "@tiptap/vue-3": "^3.10.2",
+    "axios": "^1.13.2",
     "pinia": "^3.0.3",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"

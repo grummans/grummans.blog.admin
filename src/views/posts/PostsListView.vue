@@ -33,8 +33,30 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="card text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading posts...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="card bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+      <div class="flex items-start gap-3">
+        <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <h3 class="text-red-800 dark:text-red-200 font-semibold">Error loading posts</h3>
+          <p class="text-red-600 dark:text-red-400 text-sm mt-1">{{ error }}</p>
+          <button @click="fetchPosts" class="mt-3 text-sm text-red-700 dark:text-red-300 hover:underline">
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Posts List -->
-    <div class="card">
+    <div v-else class="card">
       <div class="space-y-4">
         <div
           v-for="post in paginatedPosts"
@@ -65,7 +87,7 @@
             </p>
             
             <!-- Tags -->
-            <div class="mt-2 flex flex-wrap gap-2">
+            <div v-if="post.tags && post.tags.length > 0" class="mt-2 flex flex-wrap gap-2">
               <span
                 v-for="tag in post.tags.slice(0, 3)"
                 :key="tag.id"
@@ -178,32 +200,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { mockPosts } from '@/mock/data'
+import { ref, computed, watch, onMounted } from 'vue'
+import { postService } from '@/services/postService'
+import type { Post } from '@/mock/data'
 
 const searchQuery = ref('')
 const filterStatus = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 5
+const itemsPerPage = 5 // 5 posts per page
+
+// API state management
+const posts = ref<Post[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+
+// Fetch posts from API
+const fetchPosts = async () => {
+  loading.value = true
+  error.value = null
+  
+  try {
+    const response = await postService.getAllContent()
+    // Ensure we have an array
+    posts.value = Array.isArray(response) ? response : []
+  } catch (err: any) {
+    error.value = err.message || 'Failed to fetch posts'
+    console.error('Error fetching posts:', err)
+    posts.value = [] // Set to empty array on error
+  } finally {
+    loading.value = false
+  }
+}
 
 const filteredPosts = computed(() => {
-  let posts = [...mockPosts]
+  // Ensure posts.value is an array
+  if (!Array.isArray(posts.value)) {
+    return []
+  }
+  
+  let filteredList = [...posts.value]
 
   // Filter by status
   if (filterStatus.value) {
-    posts = posts.filter(post => post.status === filterStatus.value)
+    filteredList = filteredList.filter(post => post.status === filterStatus.value)
   }
 
   // Filter by search query
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    posts = posts.filter(post =>
+    filteredList = filteredList.filter(post =>
       post.title.toLowerCase().includes(query) ||
       post.excerpt.toLowerCase().includes(query)
     )
   }
 
-  return posts.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  return filteredList.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
 })
 
 // Pagination
@@ -273,10 +324,20 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString()
 }
 
-const deletePost = (id: string) => {
+const deletePost = async (id: string) => {
   if (confirm('Are you sure you want to delete this post?')) {
-    // Mock delete - in real app, this would call an API
-    console.log('Deleting post:', id)
+    try {
+      await postService.delete(id)
+      // Refresh the posts list after deletion
+      await fetchPosts()
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete post')
+    }
   }
 }
+
+// Fetch posts on component mount
+onMounted(() => {
+  fetchPosts()
+})
 </script>
