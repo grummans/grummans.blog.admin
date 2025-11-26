@@ -1,6 +1,5 @@
 import { api } from './api'
 import type { Post } from '@/mock/data'
-import { mockAuthors, mockCategories, mockTags } from '@/mock/data'
 
 // Backend response types
 export interface PostApiResponse {
@@ -14,12 +13,24 @@ export interface PostApiResponse {
   createdAt?: string
   publishedAt?: string
   status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED'
-  categoryId: number | null
-  tagId: number[]
+  category: {
+    id: number
+    name: string
+    slug: string
+  } | null
+  tags: Array<{
+    id: number
+    name: string
+    slug: string
+  }>
   slug: string
   metaTitle: string
   metaDescription: string
-  authorId: string
+  author: {
+    id: number
+    username: string
+    displayName: string
+  }
   featuredImage?: string | null
 }
 
@@ -35,11 +46,32 @@ export interface PaginatedPostsResponse {
 function mapApiResponseToPost(apiPost: PostApiResponse): Post {
   const status = apiPost.status.toLowerCase() as 'draft' | 'published' | 'scheduled'
   
-  // Find category and tags from mock data (will be replaced with real API later)
-  const category = mockCategories.find(c => c.id === String(apiPost.categoryId)) || null
-  const tags = apiPost.tagId?.map(tagId => 
-    mockTags.find(t => t.id === String(tagId))
-  ).filter(Boolean) as any[] || []
+  // Map category from API
+  const category = apiPost.category ? {
+    id: String(apiPost.category.id),
+    name: apiPost.category.name,
+    slug: apiPost.category.slug,
+    description: '',
+    postCount: 0,
+  } : null
+  
+  // Map tags from API
+  const tags = apiPost.tags?.map(tag => ({
+    id: String(tag.id),
+    name: tag.name,
+    slug: tag.slug,
+    postCount: 0,
+  })) || []
+  
+  // Map author from API
+  const author = {
+    id: String(apiPost.author.id),
+    name: apiPost.author.displayName,
+    email: `${apiPost.author.username}@blog.com`,
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(apiPost.author.displayName)}&background=0ea5e9&color=fff`,
+    bio: '',
+    role: 'admin' as const,
+  }
   
   return {
     id: String(apiPost.id),
@@ -52,14 +84,7 @@ function mapApiResponseToPost(apiPost: PostApiResponse): Post {
     publishedAt: apiPost.publishedAt || null,
     createdAt: apiPost.createdAt || apiPost.updatedAt,
     updatedAt: apiPost.updatedAt,
-    author: mockAuthors[0] || {
-      id: '1',
-      name: 'Admin',
-      email: 'admin@blog.com',
-      avatar: 'https://ui-avatars.com/api/?name=Admin&background=0ea5e9&color=fff',
-      bio: 'Admin user',
-      role: 'admin' as const,
-    },
+    author,
     category,
     tags,
     views: apiPost.viewCount,
