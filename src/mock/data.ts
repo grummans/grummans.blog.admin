@@ -16,6 +16,7 @@ export interface Post {
   readingTime: number
   metaTitle?: string
   metaDescription?: string
+  isFeatured?: boolean  // For highlighting important posts
 }
 
 export interface Author {

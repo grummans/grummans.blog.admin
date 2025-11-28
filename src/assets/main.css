@@ -34,3 +34,76 @@
     @apply w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors;
   }
 }
+
+/* Vue Toastification Custom Styles */
+.Vue-Toastification__toast {
+  @apply font-sans rounded-lg shadow-lg border;
+}
+
+.Vue-Toastification__toast--default {
+  @apply bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-dark-700;
+}
+
+.Vue-Toastification__toast--success {
+  @apply bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 border-l-4 border-l-green-500 border-gray-200 dark:border-dark-700;
+}
+
+.Vue-Toastification__toast--error {
+  @apply bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 border-l-4 border-l-red-500 border-gray-200 dark:border-dark-700;
+}
+
+.Vue-Toastification__toast--warning {
+  @apply bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 border-l-4 border-l-yellow-500 border-gray-200 dark:border-dark-700;
+}
+
+.Vue-Toastification__toast--info {
+  @apply bg-white dark:bg-dark-800 text-gray-900 dark:text-gray-100 border-l-4 border-l-primary-500 border-gray-200 dark:border-dark-700;
+}
+
+.Vue-Toastification__toast-body {
+  @apply text-sm font-medium;
+}
+
+.Vue-Toastification__progress-bar {
+  @apply h-1;
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__progress-bar {
+  @apply bg-green-500;
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__progress-bar {
+  @apply bg-red-500;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__progress-bar {
+  @apply bg-yellow-500;
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__progress-bar {
+  @apply bg-primary-500;
+}
+
+.Vue-Toastification__close-button {
+  @apply text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors;
+}
+
+.Vue-Toastification__icon {
+  @apply mr-3;
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__icon {
+  @apply text-green-500;
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__icon {
+  @apply text-red-500;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__icon {
+  @apply text-yellow-500;
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__icon {
+  @apply text-primary-500;
+}

@@ -4,7 +4,7 @@ import type { ApiResponse } from '@/types/api'
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 10000,
+  timeout: 600000, // 10 minutes - increased for debugging
   headers: {
     'Content-Type': 'application/json',
   },
@@ -61,7 +61,11 @@ apiClient.interceptors.response.use(
       }
     } else if (error.request) {
       // Request made but no response
-      error.message = 'Network error. Please check your connection.'
+      if (error.code === 'ECONNABORTED') {
+        error.message = 'Request timeout. The server is taking too long to respond.'
+      } else {
+        error.message = 'Network error. Please check your connection.'
+      }
     }
     
     return Promise.reject(error)

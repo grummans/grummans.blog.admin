@@ -1,7 +1,7 @@
 import { api } from './api'
 import type { Post } from '@/mock/data'
 
-// Backend response types
+// Backend response types - Full DTO for detail view
 export interface PostApiResponse {
   id: number
   title: string
@@ -31,7 +31,18 @@ export interface PostApiResponse {
     username: string
     displayName: string
   }
-  featuredImage?: string | null
+  featuredImageUrl?: string | null
+  isFeatured?: boolean
+}
+
+// Simple DTO for create/update responses
+export interface SimplePostResponse {
+  id: number
+  title: string
+  slug: string
+  excerpt: string
+  featuredImageUrl: string | null
+  updatedAt: string
 }
 
 export interface PaginatedPostsResponse {
@@ -43,8 +54,12 @@ export interface PaginatedPostsResponse {
 }
 
 // Map API response to frontend Post format
-function mapApiResponseToPost(apiPost: PostApiResponse): Post {
-  const status = apiPost.status.toLowerCase() as 'draft' | 'published' | 'scheduled'
+function mapApiResponseToPost(apiPost: PostApiResponse | null): Post | null {
+  if (!apiPost) {
+    return null
+  }
+  
+  const status = apiPost.status?.toLowerCase() as 'draft' | 'published' | 'scheduled' || 'draft'
   
   // Map category from API
   const category = apiPost.category ? {
@@ -63,34 +78,42 @@ function mapApiResponseToPost(apiPost: PostApiResponse): Post {
     postCount: 0,
   })) || []
   
-  // Map author from API
-  const author = {
+  // Map author from API - handle null author
+  const author = apiPost.author ? {
     id: String(apiPost.author.id),
     name: apiPost.author.displayName,
     email: `${apiPost.author.username}@blog.com`,
     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(apiPost.author.displayName)}&background=0ea5e9&color=fff`,
     bio: '',
     role: 'admin' as const,
+  } : {
+    id: '0',
+    name: 'Unknown',
+    email: 'unknown@blog.com',
+    avatar: 'https://ui-avatars.com/api/?name=Unknown&background=0ea5e9&color=fff',
+    bio: '',
+    role: 'admin' as const,
   }
   
   return {
-    id: String(apiPost.id),
-    title: apiPost.title,
-    slug: apiPost.slug,
+    id: String(apiPost.id || 0),
+    title: apiPost.title || '',
+    slug: apiPost.slug || '',
     content: apiPost.content || '',
-    excerpt: apiPost.excerpt,
-    featuredImage: apiPost.featuredImage || null,
+    excerpt: apiPost.excerpt || '',
+    featuredImage: apiPost.featuredImageUrl || null,
     status,
     publishedAt: apiPost.publishedAt || null,
-    createdAt: apiPost.createdAt || apiPost.updatedAt,
-    updatedAt: apiPost.updatedAt,
+    createdAt: apiPost.createdAt || apiPost.updatedAt || new Date().toISOString(),
+    updatedAt: apiPost.updatedAt || new Date().toISOString(),
     author,
     category,
     tags,
-    views: apiPost.viewCount,
-    readingTime: apiPost.readingTimeMinutes,
-    metaTitle: apiPost.metaTitle,
-    metaDescription: apiPost.metaDescription,
+    views: apiPost.viewCount || 0,
+    readingTime: apiPost.readingTimeMinutes || 5,
+    metaTitle: apiPost.metaTitle || '',
+    metaDescription: apiPost.metaDescription || '',
+    isFeatured: apiPost.isFeatured || false,
   }
 }
 
@@ -101,15 +124,17 @@ export interface CreatePostDto {
   excerpt?: string
   featuredImage?: string | null
   status?: 'draft' | 'published' | 'scheduled'
-  categoryId?: string | null
-  tagIds?: string[]
+  categoryId?: number | null
+  tagId?: number[]  // Backend expects tagId, not tagIds
+  authorUsername?: string
   metaTitle?: string
   metaDescription?: string
-  readingTime?: number
+  readingTimeMinutes?: number
+  isFeatured?: boolean  // For highlighting important posts
 }
 
 export interface UpdatePostDto extends Partial<CreatePostDto> {
-  id: string
+  id?: string
 }
 
 // Post Service
@@ -126,19 +151,52 @@ export const postService = {
   async getAllContent() {
     const response = await this.getAll(1, 100)
     const apiPosts = response.content || []
-    return apiPosts.map(mapApiResponseToPost)
+    return apiPosts.map(mapApiResponseToPost).filter((post): post is Post => post !== null)
   },
 
   // Get single post by ID
   async getById(id: string) {
     const response = await api.get<PostApiResponse>(`/a/posts/${id}`)
-    return mapApiResponseToPost(response.data)
+    const post = mapApiResponseToPost(response.data)
+    if (!post) {
+      throw new Error('Post not found')
+    }
+    return post
   },
 
-  // Create new post
-  async create(data: CreatePostDto) {
-    const response = await api.post<PostApiResponse>('/a/posts/create', data)
-    return mapApiResponseToPost(response.data)
+  // Create new post with multipart/form-data support
+  // Returns SimplePostResponse (lightweight) instead of full Post
+  async create(data: CreatePostDto, featuredImageFile?: File): Promise<SimplePostResponse | null> {
+    const formData = new FormData()
+    
+    // Convert status to uppercase for backend
+    const postData = {
+      ...data,
+      status: data.status?.toUpperCase() || 'DRAFT',
+    }
+    
+    // Append post data as JSON blob
+    formData.append('post', new Blob([JSON.stringify(postData)], {
+      type: 'application/json'
+    }))
+    
+    // Append featured image file if provided
+    if (featuredImageFile) {
+      formData.append('featuredImage', featuredImageFile)
+    }
+    
+    const response = await api.post<SimplePostResponse>('/a/posts/create', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    
+    // Handle case where backend returns null or no data
+    if (!response.data) {
+      return null
+    }
+    
+    return response.data
   },
 
   // Update existing post

@@ -58,6 +58,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/SettingsView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/editor-demo',
+    name: 'editor-demo',
+    component: () => import('../views/EditorDemoView.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

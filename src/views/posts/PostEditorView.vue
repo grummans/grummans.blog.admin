@@ -1,5 +1,24 @@
 <template>
-  <div>
+  <div class="relative">
+    <!-- Saving Overlay -->
+    <LoadingOverlay 
+      :visible="saving" 
+      :message="savingMessage"
+      subtitle="Please wait, this may take a moment..."
+    />
+
+    <!-- Publish Confirm Dialog -->
+    <ConfirmDialog
+      :visible="showPublishConfirm"
+      title="Publish Post"
+      message="Are you sure you want to publish this post? It will be visible to all readers."
+      type="info"
+      confirmText="Yes, Publish"
+      cancelText="Cancel"
+      @confirm="confirmPublish"
+      @cancel="showPublishConfirm = false"
+    />
+
     <!-- Loading State -->
     <div v-if="loading" class="card text-center py-12">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -105,6 +124,32 @@
           </select>
         </div>
 
+        <!-- Featured Post Toggle -->
+        <div class="card">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Featured Post</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Highlight this post on the homepage</p>
+            </div>
+            <button
+              @click="post.isFeatured = !post.isFeatured"
+              :class="[
+                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                post.isFeatured ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              ]"
+              role="switch"
+              :aria-checked="post.isFeatured"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  post.isFeatured ? 'translate-x-5' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
+        </div>
+
         <!-- Featured Image -->
         <div class="card">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Featured Image</h3>
@@ -116,7 +161,7 @@
               class="w-full h-40 object-cover rounded-lg"
             />
             <button
-              @click="post.featuredImage = null"
+              @click="() => { post.featuredImage = null; featuredImageFile = null }"
               class="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,16 +170,23 @@
             </button>
           </div>
 
-          <div v-else class="border-2 border-dashed border-gray-300 dark:border-dark-600 rounded-lg p-8 text-center">
+          <div v-else class="border-2 border-dashed border-gray-300 dark:border-dark-600 rounded-lg p-8 text-center relative">
+            <div v-if="uploadingFeatured" class="absolute inset-0 bg-white/80 dark:bg-dark-800/80 flex items-center justify-center backdrop-blur-sm rounded-lg">
+              <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
             <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <button
               @click="addFeaturedImage"
-              class="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+              :disabled="uploadingFeatured"
+              class="text-sm text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50"
             >
-              Add featured image
+              {{ uploadingFeatured ? 'Uploading...' : 'Click to upload featured image' }}
             </button>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Or drag and drop (JPEG, PNG, GIF, WebP • Max 5MB)
+            </p>
           </div>
         </div>
 
@@ -260,18 +312,25 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'
-import { postService } from '@/services/postService'
+import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import { postService, type CreatePostDto } from '@/services/postService'
+import { mediaService } from '@/services/mediaService'
+import { useToast } from '@/composables/useToast'
 import { mockCategories, mockTags } from '@/mock/data'
 import type { Post, Category, Tag } from '@/mock/data'
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 
 const isNewPost = computed(() => route.name === 'post-new')
 const saving = ref(false)
+const savingMessage = ref('Saving...')
 const loading = ref(false)
 const error = ref<string | null>(null)
 const selectedTag = ref('')
+const showPublishConfirm = ref(false)
 
 const categories = mockCategories
 const allTags = mockTags
@@ -301,6 +360,7 @@ const post = ref<Post>({
   readingTime: 5,
   metaTitle: '',
   metaDescription: '',
+  isFeatured: false,
 })
 
 const availableTags = computed(() => {
@@ -321,20 +381,42 @@ const removeTag = (tag: Tag) => {
   post.value.tags = post.value.tags.filter(t => t.id !== tag.id)
 }
 
+const uploadingFeatured = ref(false)
+
+const featuredImageFile = ref<File | null>(null)
+
 const addFeaturedImage = () => {
-  const url = window.prompt('Enter image URL:')
-  if (url) {
-    post.value.featuredImage = url
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  
+  input.onchange = async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (!file) return
+    
+    // Validate
+    const validation = mediaService.validateImage(file)
+    if (!validation.valid) {
+      toast.error(validation.error || 'Invalid image')
+      return
+    }
+    
+    // Store file for later upload, create preview URL
+    featuredImageFile.value = file
+    post.value.featuredImage = URL.createObjectURL(file)
   }
+  
+  input.click()
 }
 
 const saveDraft = async () => {
   if (!post.value.title || !post.value.content) {
-    alert('Please fill in title and content')
+    toast.warning('Please fill in title and content')
     return
   }
 
   saving.value = true
+  savingMessage.value = 'Saving draft...'
   error.value = null
   post.value.status = 'draft'
   
@@ -347,45 +429,56 @@ const saveDraft = async () => {
         .replace(/^-+|-+$/g, '')
     }
 
-    // Prepare data for API
-    const postData = {
+    // Prepare data for API (matching backend CreatePostDto)
+    const postData: CreatePostDto = {
       title: post.value.title,
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      featuredImage: post.value.featuredImage,
       status: 'draft' as const,
-      categoryId: post.value.category?.id || null,
-      tagIds: post.value.tags.map(tag => tag.id),
+      categoryId: post.value.category ? parseInt(post.value.category.id) : null,
+      tagId: post.value.tags.map(tag => parseInt(tag.id)),
+      authorUsername: 'grummans',
       metaTitle: post.value.metaTitle,
       metaDescription: post.value.metaDescription,
-      readingTime: post.value.readingTime,
+      readingTimeMinutes: post.value.readingTime,
+      isFeatured: post.value.isFeatured,
     }
 
     if (isNewPost.value) {
-      const created = await postService.create(postData)
-      post.value.id = created.id
-      alert('Draft saved successfully!')
-      router.push(`/posts/${created.id}`)
+      savingMessage.value = 'Creating new post...'
+      await postService.create(postData, featuredImageFile.value || undefined)
+      featuredImageFile.value = null // Clear after upload
     } else {
+      savingMessage.value = 'Updating post...'
       await postService.update(post.value.id, postData)
-      alert('Draft saved successfully!')
     }
+    
+    // Always navigate to list after save
+    toast.success('Draft saved successfully!')
+    router.push('/posts')
   } catch (err: any) {
     error.value = err.message || 'Failed to save draft'
-    alert(error.value)
+    toast.error(error.value || 'An error occurred')
   } finally {
     saving.value = false
   }
 }
 
-const publish = async () => {
+// Show publish confirmation dialog
+const publish = () => {
   if (!post.value.title || !post.value.content) {
-    alert('Please fill in title and content')
+    toast.warning('Please fill in title and content')
     return
   }
+  showPublishConfirm.value = true
+}
 
+// Actually publish after confirmation
+const confirmPublish = async () => {
+  showPublishConfirm.value = false
   saving.value = true
+  savingMessage.value = 'Publishing post...'
   error.value = null
   
   try {
@@ -397,33 +490,37 @@ const publish = async () => {
         .replace(/^-+|-+$/g, '')
     }
 
-    // Prepare data for API
-    const postData = {
+    // Prepare data for API (matching backend CreatePostDto)
+    const postData: CreatePostDto = {
       title: post.value.title,
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      featuredImage: post.value.featuredImage,
       status: 'published' as const,
-      categoryId: post.value.category?.id || null,
-      tagIds: post.value.tags.map(tag => tag.id),
+      categoryId: post.value.category ? parseInt(post.value.category.id) : null,
+      tagId: post.value.tags.map(tag => parseInt(tag.id)),
+      authorUsername: 'grummans',
       metaTitle: post.value.metaTitle,
       metaDescription: post.value.metaDescription,
-      readingTime: post.value.readingTime,
+      readingTimeMinutes: post.value.readingTime,
+      isFeatured: post.value.isFeatured,
     }
 
     if (isNewPost.value) {
-      await postService.create(postData)
-      alert('Post published successfully!')
+      savingMessage.value = 'Creating and publishing post...'
+      await postService.create(postData, featuredImageFile.value || undefined)
+      featuredImageFile.value = null // Clear after upload
     } else {
+      savingMessage.value = 'Updating post...'
       await postService.update(post.value.id, postData)
-      alert('Post updated successfully!')
     }
     
+    // Always navigate to list after publish
+    toast.success('Post published successfully!')
     router.push('/posts')
   } catch (err: any) {
     error.value = err.message || 'Failed to publish post'
-    alert(error.value)
+    toast.error(error.value || 'An error occurred')
   } finally {
     saving.value = false
   }
