@@ -1,5 +1,6 @@
 import { api } from './api'
 import type { Post } from '@/mock/data'
+import type { PostAttachment } from './attachmentService'
 
 // Backend response types - Full DTO for detail view
 export interface PostApiResponse {
@@ -7,6 +8,7 @@ export interface PostApiResponse {
   title: string
   excerpt: string
   content?: string
+  contentHtml?: string  // HTML content for TipTap editor
   viewCount: number
   readingTimeMinutes: number
   updatedAt: string
@@ -33,6 +35,7 @@ export interface PostApiResponse {
   }
   featuredImageUrl?: string | null
   isFeatured?: boolean
+  attachments?: PostAttachment[]  // Post attachments from backend
 }
 
 // Simple DTO for create/update responses
@@ -99,7 +102,7 @@ function mapApiResponseToPost(apiPost: PostApiResponse | null): Post | null {
     id: String(apiPost.id || 0),
     title: apiPost.title || '',
     slug: apiPost.slug || '',
-    content: apiPost.content || '',
+    content: apiPost.contentHtml || apiPost.content || '',  // Prefer contentHtml for TipTap editor
     excerpt: apiPost.excerpt || '',
     featuredImage: apiPost.featuredImageUrl || null,
     status,
@@ -118,6 +121,7 @@ function mapApiResponseToPost(apiPost: PostApiResponse | null): Post | null {
 }
 
 export interface CreatePostDto {
+  id?: number  // Optional: Only for UPDATE existing draft
   title: string
   slug?: string
   content: string
@@ -133,25 +137,31 @@ export interface CreatePostDto {
   isFeatured?: boolean  // For highlighting important posts
 }
 
-export interface UpdatePostDto extends Partial<CreatePostDto> {
-  id?: string
-}
+export interface UpdatePostDto extends Partial<CreatePostDto> {}
 
 // Post Service
 export const postService = {
-  // Get all posts (with pagination)
-  async getAll(page: number = 1, size: number = 100) {
+  // Get all posts (with pagination and optional status filter)
+  async getAll(page: number = 1, size: number = 100, status?: 'DRAFT' | 'PUBLISHED') {
     const response = await api.get<PaginatedPostsResponse>('/a/posts/list', {
-      params: { page, size }
+      params: { page, size, status }
     })
     return response.data
   },
 
   // Get all posts content only
-  async getAllContent() {
-    const response = await this.getAll(1, 100)
+  async getAllContent(status?: 'DRAFT' | 'PUBLISHED') {
+    const response = await this.getAll(1, 100, status)
     const apiPosts = response.content || []
     return apiPosts.map(mapApiResponseToPost).filter((post): post is Post => post !== null)
+  },
+
+  // Get all drafts
+  async getDrafts(page: number = 1, size: number = 100) {
+    const response = await api.get<PaginatedPostsResponse>('/a/posts/drafts', {
+      params: { page, size }
+    })
+    return response.data
   },
 
   // Get single post by ID
@@ -164,15 +174,49 @@ export const postService = {
     return post
   },
 
-  // Create new post with multipart/form-data support
-  // Returns SimplePostResponse (lightweight) instead of full Post
+  // Save draft (create new or update existing)
+  // If data.id is provided, updates existing draft
+  // If data.id is not provided, creates new draft
+  async saveDraft(data: CreatePostDto, featuredImageFile?: File): Promise<SimplePostResponse | null> {
+    const formData = new FormData()
+    
+    // Prepare post data - status is always DRAFT for this endpoint
+    const postData = {
+      ...data,
+      id: data.id || undefined,  // Include id only if updating existing draft
+    }
+    
+    // Append post data as JSON blob
+    formData.append('post', new Blob([JSON.stringify(postData)], {
+      type: 'application/json'
+    }))
+    
+    // Append featured image file if provided
+    if (featuredImageFile) {
+      formData.append('featuredImage', featuredImageFile)
+    }
+    
+    const response = await api.post<SimplePostResponse>('/a/posts/save-draft', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    
+    if (!response.data) {
+      return null
+    }
+    
+    return response.data
+  },
+
+  // Create and publish post directly (skip draft)
   async create(data: CreatePostDto, featuredImageFile?: File): Promise<SimplePostResponse | null> {
     const formData = new FormData()
     
     // Convert status to uppercase for backend
     const postData = {
       ...data,
-      status: data.status?.toUpperCase() || 'DRAFT',
+      status: data.status?.toUpperCase() || 'PUBLISHED',
     }
     
     // Append post data as JSON blob
@@ -212,8 +256,8 @@ export const postService = {
   },
 
   // Publish draft post
-  async publish(id: string) {
-    const response = await api.post<Post>(`/a/posts/${id}/publish`)
-    return response.data
+  async publish(id: string): Promise<SimplePostResponse | null> {
+    const response = await api.post<SimplePostResponse>(`/a/posts/${id}/publish`)
+    return response.data || null
   },
 }

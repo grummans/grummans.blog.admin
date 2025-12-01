@@ -60,6 +60,7 @@
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Save Draft Button -->
         <button
           @click="saveDraft"
           class="btn btn-secondary"
@@ -67,12 +68,23 @@
         >
           {{ saving ? 'Saving...' : 'Save Draft' }}
         </button>
+        <!-- Publish Button -->
         <button
+          v-if="post.status === 'draft' || isNewPost"
           @click="publish"
           class="btn btn-primary"
           :disabled="saving"
         >
-          {{ post.status === 'published' ? 'Update' : 'Publish' }}
+          Publish
+        </button>
+        <!-- Update Button (for published posts) -->
+        <button
+          v-else
+          @click="updatePost"
+          class="btn btn-primary"
+          :disabled="saving"
+        >
+          Update
         </button>
       </div>
     </div>
@@ -246,6 +258,13 @@
           </select>
         </div>
 
+        <!-- Attachments -->
+        <AttachmentList
+          ref="attachmentListRef"
+          :postId="isNewPost ? null : post.id"
+          :disabled="saving"
+        />
+
         <!-- SEO -->
         <div class="card">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">SEO Settings</h3>
@@ -314,6 +333,7 @@ import { useRoute, useRouter } from 'vue-router'
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'
 import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import AttachmentList from '@/components/common/AttachmentList.vue'
 import { postService, type CreatePostDto } from '@/services/postService'
 import { mediaService } from '@/services/mediaService'
 import { useToast } from '@/composables/useToast'
@@ -331,6 +351,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const selectedTag = ref('')
 const showPublishConfirm = ref(false)
+const attachmentListRef = ref<InstanceType<typeof AttachmentList> | null>(null)
 
 const categories = mockCategories
 const allTags = mockTags
@@ -410,32 +431,32 @@ const addFeaturedImage = () => {
 }
 
 const saveDraft = async () => {
-  if (!post.value.title || !post.value.content) {
-    toast.warning('Please fill in title and content')
+  // Draft can be saved with minimal data
+  if (!post.value.title) {
+    toast.warning('Please fill in the title')
     return
   }
 
   saving.value = true
   savingMessage.value = 'Saving draft...'
   error.value = null
-  post.value.status = 'draft'
   
   try {
     // Auto-generate slug if empty
-    if (!post.value.slug) {
+    if (!post.value.slug && post.value.title) {
       post.value.slug = post.value.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
     }
 
-    // Prepare data for API (matching backend CreatePostDto)
+    // Prepare data for API
     const postData: CreatePostDto = {
+      id: isNewPost.value ? undefined : parseInt(post.value.id),  // Include id for update
       title: post.value.title,
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      status: 'draft' as const,
       categoryId: post.value.category ? parseInt(post.value.category.id) : null,
       tagId: post.value.tags.map(tag => parseInt(tag.id)),
       authorUsername: 'grummans',
@@ -445,16 +466,19 @@ const saveDraft = async () => {
       isFeatured: post.value.isFeatured,
     }
 
-    if (isNewPost.value) {
-      savingMessage.value = 'Creating new post...'
-      await postService.create(postData, featuredImageFile.value || undefined)
-      featuredImageFile.value = null // Clear after upload
-    } else {
-      savingMessage.value = 'Updating post...'
-      await postService.update(post.value.id, postData)
+    savingMessage.value = isNewPost.value ? 'Creating draft...' : 'Updating draft...'
+    const savedDraft = await postService.saveDraft(postData, featuredImageFile.value || undefined)
+    featuredImageFile.value = null // Clear after upload
+    
+    // Upload pending attachments if any (for new drafts)
+    if (savedDraft?.id && attachmentListRef.value?.hasPendingFiles()) {
+      savingMessage.value = 'Uploading attachments...'
+      const result = await attachmentListRef.value.uploadPendingFiles(String(savedDraft.id))
+      if (result.failed > 0) {
+        toast.warning(`${result.success} file(s) uploaded, ${result.failed} failed`)
+      }
     }
     
-    // Always navigate to list after save
     toast.success('Draft saved successfully!')
     router.push('/posts')
   } catch (err: any) {
@@ -469,6 +493,10 @@ const saveDraft = async () => {
 const publish = () => {
   if (!post.value.title || !post.value.content) {
     toast.warning('Please fill in title and content')
+    return
+  }
+  if (!post.value.category) {
+    toast.warning('Please select a category before publishing')
     return
   }
   showPublishConfirm.value = true
@@ -490,13 +518,78 @@ const confirmPublish = async () => {
         .replace(/^-+|-+$/g, '')
     }
 
-    // Prepare data for API (matching backend CreatePostDto)
+    if (isNewPost.value) {
+      // For new posts: Create and publish directly
+      savingMessage.value = 'Creating and publishing post...'
+      
+      const postData: CreatePostDto = {
+        title: post.value.title,
+        slug: post.value.slug,
+        content: post.value.content,
+        excerpt: post.value.excerpt,
+        status: 'published',
+        categoryId: post.value.category ? parseInt(post.value.category.id) : null,
+        tagId: post.value.tags.map(tag => parseInt(tag.id)),
+        authorUsername: 'grummans',
+        metaTitle: post.value.metaTitle,
+        metaDescription: post.value.metaDescription,
+        readingTimeMinutes: post.value.readingTime,
+        isFeatured: post.value.isFeatured,
+      }
+      
+      const createdPost = await postService.create(postData, featuredImageFile.value || undefined)
+      featuredImageFile.value = null
+      
+      // Upload pending attachments if any
+      if (createdPost?.id && attachmentListRef.value?.hasPendingFiles()) {
+        savingMessage.value = 'Uploading attachments...'
+        const result = await attachmentListRef.value.uploadPendingFiles(String(createdPost.id))
+        if (result.failed > 0) {
+          toast.warning(`${result.success} file(s) uploaded, ${result.failed} failed`)
+        }
+      }
+    } else {
+      // For existing drafts: Use publish endpoint
+      savingMessage.value = 'Publishing draft...'
+      await postService.publish(post.value.id)
+    }
+    
+    toast.success('Post published successfully!')
+    router.push('/posts')
+  } catch (err: any) {
+    error.value = err.message || 'Failed to publish post'
+    toast.error(error.value || 'An error occurred')
+  } finally {
+    saving.value = false
+  }
+}
+
+// Update published post
+const updatePost = async () => {
+  if (!post.value.title || !post.value.content) {
+    toast.warning('Please fill in title and content')
+    return
+  }
+
+  saving.value = true
+  savingMessage.value = 'Updating post...'
+  error.value = null
+  
+  try {
+    // Auto-generate slug if empty
+    if (!post.value.slug) {
+      post.value.slug = post.value.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    }
+
     const postData: CreatePostDto = {
       title: post.value.title,
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      status: 'published' as const,
+      status: 'published',
       categoryId: post.value.category ? parseInt(post.value.category.id) : null,
       tagId: post.value.tags.map(tag => parseInt(tag.id)),
       authorUsername: 'grummans',
@@ -506,20 +599,12 @@ const confirmPublish = async () => {
       isFeatured: post.value.isFeatured,
     }
 
-    if (isNewPost.value) {
-      savingMessage.value = 'Creating and publishing post...'
-      await postService.create(postData, featuredImageFile.value || undefined)
-      featuredImageFile.value = null // Clear after upload
-    } else {
-      savingMessage.value = 'Updating post...'
-      await postService.update(post.value.id, postData)
-    }
+    await postService.update(post.value.id, postData)
     
-    // Always navigate to list after publish
-    toast.success('Post published successfully!')
+    toast.success('Post updated successfully!')
     router.push('/posts')
   } catch (err: any) {
-    error.value = err.message || 'Failed to publish post'
+    error.value = err.message || 'Failed to update post'
     toast.error(error.value || 'An error occurred')
   } finally {
     saving.value = false

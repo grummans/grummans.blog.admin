@@ -196,13 +196,30 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      :visible="showDeleteConfirm"
+      title="Delete Post"
+      :message="`Are you sure you want to delete '${postToDelete?.title}'? This action cannot be undone.`"
+      type="danger"
+      confirmText="Delete"
+      cancelText="Cancel"
+      :loading="deleting"
+      @confirm="confirmDeletePost"
+      @cancel="showDeleteConfirm = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { postService } from '@/services/postService'
+import { useToast } from '@/composables/useToast'
 import type { Post } from '@/mock/data'
+
+const toast = useToast()
 
 const searchQuery = ref('')
 const filterStatus = ref('')
@@ -213,6 +230,11 @@ const itemsPerPage = 5 // 5 posts per page
 const posts = ref<Post[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+// Delete confirmation state
+const showDeleteConfirm = ref(false)
+const postToDelete = ref<Post | null>(null)
+const deleting = ref(false)
 
 // Fetch posts from API
 const fetchPosts = async () => {
@@ -324,15 +346,32 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString()
 }
 
-const deletePost = async (id: string) => {
-  if (confirm('Are you sure you want to delete this post?')) {
-    try {
-      await postService.delete(id)
-      // Refresh the posts list after deletion
-      await fetchPosts()
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete post')
-    }
+// Show delete confirmation dialog
+const deletePost = (id: string) => {
+  const post = posts.value.find(p => p.id === id)
+  if (post) {
+    postToDelete.value = post
+    showDeleteConfirm.value = true
+  }
+}
+
+// Actually delete after confirmation
+const confirmDeletePost = async () => {
+  if (!postToDelete.value) return
+  
+  deleting.value = true
+  
+  try {
+    await postService.delete(postToDelete.value.id)
+    toast.success(`Post "${postToDelete.value.title}" deleted successfully`)
+    showDeleteConfirm.value = false
+    postToDelete.value = null
+    // Refresh the posts list after deletion
+    await fetchPosts()
+  } catch (err: any) {
+    toast.error(err.message || 'Failed to delete post')
+  } finally {
+    deleting.value = false
   }
 }
 
