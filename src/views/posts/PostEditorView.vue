@@ -55,65 +55,89 @@
 
     <!-- Editor Content -->
     <div v-else>
-    <!-- Sticky Header with Actions -->
-    <div 
-      class="sticky top-0 z-40 -mx-6 px-6 py-4 mb-6 bg-gray-50/95 dark:bg-dark-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-dark-700 transition-shadow"
-      :class="{ 'shadow-md': isScrolled }"
-    >
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <button
-            @click="$router.back()"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {{ isNewPost ? 'Create New Post' : 'Edit Post' }}
-            </h1>
-            <!-- Change indicator -->
-            <p v-if="hasChanges && !isNewPost" class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-              <span class="inline-block w-2 h-2 bg-amber-500 rounded-full mr-1"></span>
-              Unsaved changes
-            </p>
-          </div>
+      <!-- Simple Header -->
+      <div class="flex items-center gap-4 mb-6">
+        <button
+          @click="$router.back()"
+          class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {{ isNewPost ? 'Create New Post' : 'Edit Post' }}
+          </h1>
+          <!-- Change indicator -->
+          <p v-if="hasChanges && !isNewPost" class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            <span class="inline-block w-2 h-2 bg-amber-500 rounded-full mr-1 animate-pulse"></span>
+            Unsaved changes
+          </p>
         </div>
+      </div>
 
-        <div class="flex items-center gap-3">
+      <!-- Floating Action Bar -->
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="translate-y-2 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-2 opacity-0"
+      >
+        <div 
+          v-if="showFloatingActions"
+          class="fixed bottom-8 right-8 z-50 flex items-center gap-3 bg-white dark:bg-dark-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-700 p-2"
+        >
           <!-- Save Draft Button -->
           <button
             @click="saveDraft"
-            class="btn btn-secondary"
+            class="px-4 py-2.5 rounded-xl font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="saving"
           >
-            {{ saving ? 'Saving...' : 'Save Draft' }}
+            <span class="flex items-center gap-2">
+              <svg v-if="!saving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              <div v-else class="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              {{ saving ? 'Saving...' : 'Save Draft' }}
+            </span>
           </button>
+          
           <!-- Publish Button -->
           <button
             v-if="post.status === 'draft' || isNewPost"
             @click="publish"
-            class="btn btn-primary"
+            class="px-5 py-2.5 rounded-xl font-medium text-white bg-primary-600 hover:bg-primary-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/30"
             :disabled="saving"
           >
-            Publish
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Publish
+            </span>
           </button>
+          
           <!-- Update Button (for published posts) -->
           <button
             v-else
             @click="updatePost"
-            class="btn btn-primary"
+            class="px-5 py-2.5 rounded-xl font-medium text-white transition-all duration-200 shadow-lg disabled:cursor-not-allowed"
             :disabled="saving || !hasChanges"
-            :class="{ 'opacity-50 cursor-not-allowed': !hasChanges }"
+            :class="hasChanges ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/30' : 'bg-gray-400 dark:bg-dark-600 opacity-50'"
             :title="hasChanges ? 'Save your changes' : 'No changes to save'"
           >
-            Update
+            <span class="flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Update
+            </span>
           </button>
         </div>
-      </div>
-    </div>
+      </Transition>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main Content -->
@@ -362,9 +386,10 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import AttachmentList from '@/components/common/AttachmentList.vue'
 import { postService, type CreatePostDto } from '@/services/postService'
 import { mediaService } from '@/services/mediaService'
+import { categoryService, type Category } from '@/services/categoryService'
+import { tagService, type Tag } from '@/services/tagService'
 import { useToast } from '@/composables/useToast'
-import { mockCategories, mockTags } from '@/mock/data'
-import type { Post, Category, Tag } from '@/mock/data'
+import type { Post } from '@/mock/data'
 
 const route = useRoute()
 const router = useRouter()
@@ -383,8 +408,8 @@ const attachmentListRef = ref<InstanceType<typeof AttachmentList> | null>(null)
 // Store original post state for change detection
 const originalPost = ref<string>('')
 
-const categories = mockCategories
-const allTags = mockTags
+const categories = ref<Category[]>([])
+const allTags = ref<Tag[]>([])
 
 const post = ref<Post>({
   id: '',
@@ -414,6 +439,11 @@ const post = ref<Post>({
   isFeatured: false,
 })
 
+// Helper function to safely convert id to number
+const toNumberId = (id: string | number): number => {
+  return typeof id === 'number' ? id : parseInt(String(id))
+}
+
 // Get a snapshot of post fields that we want to track for changes
 const getPostSnapshot = () => ({
   title: post.value.title,
@@ -441,21 +471,26 @@ const hasChanges = computed(() => {
 })
 
 const availableTags = computed(() => {
-  return allTags.filter(tag => !post.value.tags.find(t => t.id === tag.id))
+  return allTags.value.filter(tag => !post.value.tags.find(t => String(t.id) === String(tag.id)))
 })
 
 const addTag = () => {
   if (selectedTag.value) {
-    const tag = allTags.find(t => t.id === selectedTag.value)
+    const tag = allTags.value.find(t => String(t.id) === String(selectedTag.value))
     if (tag) {
-      post.value.tags.push(tag)
+      post.value.tags.push({
+        id: String(tag.id),
+        name: tag.name,
+        slug: tag.slug,
+        postCount: tag.postCount || 0
+      })
       selectedTag.value = ''
     }
   }
 }
 
-const removeTag = (tag: Tag) => {
-  post.value.tags = post.value.tags.filter(t => t.id !== tag.id)
+const removeTag = (tag: any) => {
+  post.value.tags = post.value.tags.filter(t => String(t.id) !== String(tag.id))
 }
 
 const uploadingFeatured = ref(false)
@@ -513,8 +548,8 @@ const saveDraft = async () => {
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      categoryId: post.value.category ? parseInt(post.value.category.id) : null,
-      tagId: post.value.tags.map(tag => parseInt(tag.id)),
+      categoryId: post.value.category ? toNumberId(post.value.category.id) : null,
+      tagId: post.value.tags.map(tag => toNumberId(tag.id)),
       authorUsername: 'grummans',
       metaTitle: post.value.metaTitle,
       metaDescription: post.value.metaDescription,
@@ -585,8 +620,8 @@ const confirmPublish = async () => {
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      categoryId: post.value.category ? parseInt(post.value.category.id) : null,
-      tagId: post.value.tags.map(tag => parseInt(tag.id)),
+      categoryId: post.value.category ? toNumberId(post.value.category.id) : null,
+      tagId: post.value.tags.map(tag => toNumberId(tag.id)),
       authorUsername: 'grummans',
       metaTitle: post.value.metaTitle,
       metaDescription: post.value.metaDescription,
@@ -657,8 +692,8 @@ const confirmUpdate = async () => {
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      categoryId: post.value.category ? parseInt(post.value.category.id) : null,
-      tagId: post.value.tags.map(tag => parseInt(tag.id)),
+      categoryId: post.value.category ? toNumberId(post.value.category.id) : null,
+      tagId: post.value.tags.map(tag => toNumberId(tag.id)),
       authorUsername: 'grummans',
       metaTitle: post.value.metaTitle,
       metaDescription: post.value.metaDescription,
@@ -700,15 +735,32 @@ const loadPost = async () => {
   }
 }
 
-// Scroll detection for sticky header shadow
-const isScrolled = ref(false)
+// Load categories and tags
+const loadCategoriesAndTags = async () => {
+  try {
+    const [loadedCategories, loadedTags] = await Promise.all([
+      categoryService.getAll(),
+      tagService.getAll()
+    ])
+    categories.value = loadedCategories
+    allTags.value = loadedTags
+  } catch (err: any) {
+    console.error('Error loading categories/tags:', err)
+    toast.error('Failed to load categories or tags')
+  }
+}
+
+// Show/hide floating actions based on scroll position
+const showFloatingActions = ref(false)
 
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 10
+  // Show floating buttons after scrolling down 100px
+  showFloatingActions.value = window.scrollY > 100
 }
 
 onMounted(() => {
   loadPost()
+  loadCategoriesAndTags()
   window.addEventListener('scroll', handleScroll)
 })
 

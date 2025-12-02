@@ -1,5 +1,21 @@
 <template>
-  <div>
+  <div class="relative">
+    <!-- Loading Overlay -->
+    <LoadingOverlay :visible="loading" message="Loading tags..." />
+
+    <!-- Delete Confirm Dialog -->
+    <ConfirmDialog
+      v-if="tagToDelete"
+      :visible="showDeleteConfirm"
+      title="Delete Tag"
+      :message="`Are you sure you want to delete '${tagToDelete.name}'?${tagToDelete.postCount ? ` This tag is used in ${tagToDelete.postCount} post${tagToDelete.postCount > 1 ? 's' : ''}.` : ''}`"
+      type="danger"
+      confirmText="Yes, Delete"
+      cancelText="Cancel"
+      @confirm="confirmDelete"
+      @cancel="showDeleteConfirm = false"
+    />
+
     <!-- Header -->
     <div class="mb-8 flex items-center justify-between">
       <div>
@@ -121,14 +137,16 @@
               type="button"
               @click="showModal = false"
               class="btn btn-secondary"
+              :disabled="saving"
             >
               Cancel
             </button>
             <button
               type="submit"
               class="btn btn-primary"
+              :disabled="saving"
             >
-              {{ editingTag ? 'Update' : 'Create' }}
+              {{ saving ? 'Saving...' : (editingTag ? 'Update' : 'Create') }}
             </button>
           </div>
         </form>
@@ -138,16 +156,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { mockTags } from '@/mock/data'
-import type { Tag } from '@/mock/data'
+import { ref, computed, onMounted } from 'vue'
+import { tagService, generateSlug, type Tag, type TagRequest } from '@/services/tagService'
+import { useToast } from '@/composables/useToast'
+import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
-const tags = ref([...mockTags])
+const toast = useToast()
+
+const tags = ref<Tag[]>([])
 const searchQuery = ref('')
 const showModal = ref(false)
 const editingTag = ref<Tag | null>(null)
+const editingTagId = ref<number | null>(null)
+const loading = ref(false)
+const saving = ref(false)
+const showDeleteConfirm = ref(false)
+const tagToDelete = ref<Tag | null>(null)
 
-const formData = ref({
+const formData = ref<TagRequest>({
   name: '',
   slug: '',
 })
@@ -162,8 +189,22 @@ const filteredTags = computed(() => {
   )
 })
 
+// Load tags from API
+const loadTags = async () => {
+  loading.value = true
+  try {
+    tags.value = await tagService.getAll()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to load tags')
+    console.error('Error loading tags:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
 const openCreateModal = () => {
   editingTag.value = null
+  editingTagId.value = null
   formData.value = {
     name: '',
     slug: '',
@@ -171,59 +212,86 @@ const openCreateModal = () => {
   showModal.value = true
 }
 
-const openEditModal = (tag: Tag) => {
-  editingTag.value = tag
-  formData.value = {
-    name: tag.name,
-    slug: tag.slug,
+const openEditModal = async (tag: Tag) => {
+  editingTagId.value = tag.id
+  
+  loading.value = true
+  try {
+    const fullTag = await tagService.getById(tag.id)
+    editingTag.value = fullTag
+    formData.value = {
+      name: fullTag.name,
+      slug: fullTag.slug,
+    }
+    showModal.value = true
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to load tag details')
+  } finally {
+    loading.value = false
   }
-  showModal.value = true
 }
 
 const autoGenerateSlug = () => {
   if (!editingTag.value) {
-    formData.value.slug = formData.value.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
+    formData.value.slug = generateSlug(formData.value.name)
   }
 }
 
-const saveTag = () => {
-  if (editingTag.value) {
-    // Update existing
-    const index = tags.value.findIndex(t => t.id === editingTag.value!.id)
-    if (index !== -1) {
-      tags.value[index] = {
-        ...tags.value[index]!,
-        name: formData.value.name,
-        slug: formData.value.slug,
-      }
-    }
-  } else {
-    // Create new
-    const newTag: Tag = {
-      id: String(tags.value.length + 1),
-      ...formData.value,
-      postCount: 0,
-    }
-    tags.value.push(newTag)
+const saveTag = async () => {
+  // Validate
+  if (!formData.value.name.trim()) {
+    toast.warning('Tag name is required')
+    return
+  }
+  if (!formData.value.slug.trim()) {
+    toast.warning('Tag slug is required')
+    return
   }
 
-  showModal.value = false
+  saving.value = true
+  try {
+    if (editingTagId.value) {
+      // Update existing
+      await tagService.update(editingTagId.value, formData.value)
+      toast.success('Tag updated successfully')
+    } else {
+      // Create new
+      await tagService.create(formData.value)
+      toast.success('Tag created successfully')
+    }
+    
+    showModal.value = false
+    await loadTags()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to save tag')
+    console.error('Error saving tag:', error)
+  } finally {
+    saving.value = false
+  }
 }
 
 const deleteTag = (tag: Tag) => {
-  if (tag.postCount > 0) {
-    if (!confirm(`This tag is used in ${tag.postCount} posts. Delete anyway?`)) {
-      return
-    }
-  } else {
-    if (!confirm(`Delete "${tag.name}"?`)) {
-      return
-    }
-  }
-  
-  tags.value = tags.value.filter(t => t.id !== tag.id)
+  tagToDelete.value = tag
+  showDeleteConfirm.value = true
 }
+
+const confirmDelete = async () => {
+  if (!tagToDelete.value) return
+  
+  showDeleteConfirm.value = false
+  try {
+    await tagService.delete(tagToDelete.value.id)
+    toast.success('Tag deleted successfully')
+    await loadTags()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to delete tag')
+  } finally {
+    tagToDelete.value = null
+  }
+}
+
+// Load on mount
+onMounted(() => {
+  loadTags()
+})
 </script>
