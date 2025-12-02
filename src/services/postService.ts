@@ -121,20 +121,18 @@ function mapApiResponseToPost(apiPost: PostApiResponse | null): Post | null {
 }
 
 export interface CreatePostDto {
-  id?: number  // Optional: Only for UPDATE existing draft
+  id?: number | null  // null = tạo mới, number = update existing
   title: string
   slug?: string
-  content: string
+  content?: string
   excerpt?: string
-  featuredImage?: string | null
-  status?: 'draft' | 'published' | 'scheduled'
-  categoryId?: number | null
-  tagId?: number[]  // Backend expects tagId, not tagIds
+  categoryId?: number | null  // 0 hoặc null = chưa chọn
+  tagId?: number[]  // [] = chưa chọn tags
   authorUsername?: string
   metaTitle?: string
   metaDescription?: string
   readingTimeMinutes?: number
-  isFeatured?: boolean  // For highlighting important posts
+  isFeatured?: boolean
 }
 
 export interface UpdatePostDto extends Partial<CreatePostDto> {}
@@ -174,16 +172,28 @@ export const postService = {
     return post
   },
 
-  // Save draft (create new or update existing)
-  // If data.id is provided, updates existing draft
-  // If data.id is not provided, creates new draft
+  /**
+   * Save draft - Lưu nháp (không validate)
+   * - id = null/undefined: Tạo draft mới
+   * - id = number: Update draft hiện tại
+   */
   async saveDraft(data: CreatePostDto, featuredImageFile?: File): Promise<SimplePostResponse | null> {
     const formData = new FormData()
     
-    // Prepare post data - status is always DRAFT for this endpoint
+    // Prepare post data
     const postData = {
-      ...data,
-      id: data.id || undefined,  // Include id only if updating existing draft
+      id: data.id ?? null,  // null = create new, number = update
+      title: data.title,
+      slug: data.slug,
+      content: data.content || '',
+      excerpt: data.excerpt || '',
+      categoryId: data.categoryId || 0,  // 0 = chưa chọn
+      tagId: data.tagId || [],
+      authorUsername: data.authorUsername,
+      metaTitle: data.metaTitle,
+      metaDescription: data.metaDescription,
+      readingTimeMinutes: data.readingTimeMinutes,
+      isFeatured: data.isFeatured === true,  // Explicit boolean, default false
     }
     
     // Append post data as JSON blob
@@ -202,21 +212,33 @@ export const postService = {
       },
     })
     
-    if (!response.data) {
-      return null
-    }
-    
-    return response.data
+    return response.data || null
   },
 
-  // Create and publish post directly (skip draft)
-  async create(data: CreatePostDto, featuredImageFile?: File): Promise<SimplePostResponse | null> {
+  /**
+   * Publish - Xuất bản bài viết (validate đầy đủ)
+   * - id = null/undefined: Tạo mới và publish ngay
+   * - id = number: Publish draft đã lưu trước đó
+   * 
+   * Required: title, slug, categoryId (>0), tagId (≥1)
+   */
+  async publish(data: CreatePostDto, featuredImageFile?: File): Promise<SimplePostResponse | null> {
     const formData = new FormData()
     
-    // Convert status to uppercase for backend
+    // Prepare post data
     const postData = {
-      ...data,
-      status: data.status?.toUpperCase() || 'PUBLISHED',
+      id: data.id ?? null,  // null = create new, number = publish existing draft
+      title: data.title,
+      slug: data.slug,
+      content: data.content || '',
+      excerpt: data.excerpt || '',
+      categoryId: data.categoryId,
+      tagId: data.tagId || [],
+      authorUsername: data.authorUsername,
+      metaTitle: data.metaTitle,
+      metaDescription: data.metaDescription,
+      readingTimeMinutes: data.readingTimeMinutes,
+      isFeatured: data.isFeatured === true,  // Explicit boolean, default false
     }
     
     // Append post data as JSON blob
@@ -229,35 +251,63 @@ export const postService = {
       formData.append('featuredImage', featuredImageFile)
     }
     
-    const response = await api.post<SimplePostResponse>('/a/posts/create', formData, {
+    const response = await api.post<SimplePostResponse>('/a/posts/publish', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
     
-    // Handle case where backend returns null or no data
-    if (!response.data) {
-      return null
-    }
-    
-    return response.data
+    return response.data || null
   },
 
-  // Update existing post
-  async update(id: string, data: UpdatePostDto) {
-    const response = await api.put<PostApiResponse>(`/a/posts/${id}`, data)
-    return mapApiResponseToPost(response.data)
+  /**
+   * Update Published Post - Cập nhật bài đã xuất bản
+   * - Chỉ dùng cho post có status = PUBLISHED
+   * - Validate đầy đủ: title, slug, category, tags
+   * - Giữ nguyên publishedAt, tự động update updatedAt
+   * 
+   * Note: Không cần id trong body (đã có trong URL path)
+   */
+  async updatePublished(postId: string | number, data: Omit<CreatePostDto, 'id'>, featuredImageFile?: File): Promise<SimplePostResponse | null> {
+    const formData = new FormData()
+    
+    // Prepare post data - không cần id vì đã có trong URL
+    const postData = {
+      title: data.title,
+      slug: data.slug,
+      content: data.content || '',
+      excerpt: data.excerpt || '',
+      categoryId: data.categoryId,
+      tagId: data.tagId || [],
+      authorUsername: data.authorUsername,
+      metaTitle: data.metaTitle,
+      metaDescription: data.metaDescription,
+      readingTimeMinutes: data.readingTimeMinutes,
+      isFeatured: data.isFeatured === true,  // Explicit boolean, default false
+    }
+    
+    // Append post data as JSON blob
+    formData.append('post', new Blob([JSON.stringify(postData)], {
+      type: 'application/json'
+    }))
+    
+    // Append featured image file if provided (deletes old image if exists)
+    if (featuredImageFile) {
+      formData.append('featuredImage', featuredImageFile)
+    }
+    
+    const response = await api.put<SimplePostResponse>(`/a/posts/${postId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    
+    return response.data || null
   },
 
   // Delete post
   async delete(id: string) {
     const response = await api.delete(`/a/posts/${id}`)
     return response.data
-  },
-
-  // Publish draft post
-  async publish(id: string): Promise<SimplePostResponse | null> {
-    const response = await api.post<SimplePostResponse>(`/a/posts/${id}/publish`)
-    return response.data || null
   },
 }

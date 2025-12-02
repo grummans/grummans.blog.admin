@@ -82,7 +82,7 @@ export const mediaService = {
 
   // Validate image file
   validateImage(file: File): { valid: boolean; error?: string } {
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    const maxSize = 10 * 1024 * 1024 // 5MB
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
 
     if (!allowedTypes.includes(file.type)) {
@@ -95,7 +95,7 @@ export const mediaService = {
     if (file.size > maxSize) {
       return {
         valid: false,
-        error: 'File size exceeds 5MB limit.',
+        error: 'File size exceeds 10MB limit.',
       }
     }
 

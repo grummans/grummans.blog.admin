@@ -19,6 +19,18 @@
       @cancel="showPublishConfirm = false"
     />
 
+    <!-- Update Confirm Dialog -->
+    <ConfirmDialog
+      :visible="showUpdateConfirm"
+      title="Update Post"
+      message="Are you sure you want to update this post? Changes will be visible to all readers immediately."
+      type="info"
+      confirmText="Yes, Update"
+      cancelText="Cancel"
+      @confirm="confirmUpdate"
+      @cancel="showUpdateConfirm = false"
+    />
+
     <!-- Loading State -->
     <div v-if="loading" class="card text-center py-12">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -43,49 +55,63 @@
 
     <!-- Editor Content -->
     <div v-else>
-    <!-- Header -->
-    <div class="mb-6 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <button
-          @click="$router.back()"
-          class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </button>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {{ isNewPost ? 'Create New Post' : 'Edit Post' }}
-        </h1>
-      </div>
+    <!-- Sticky Header with Actions -->
+    <div 
+      class="sticky top-0 z-40 -mx-6 px-6 py-4 mb-6 bg-gray-50/95 dark:bg-dark-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-dark-700 transition-shadow"
+      :class="{ 'shadow-md': isScrolled }"
+    >
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button
+            @click="$router.back()"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {{ isNewPost ? 'Create New Post' : 'Edit Post' }}
+            </h1>
+            <!-- Change indicator -->
+            <p v-if="hasChanges && !isNewPost" class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+              <span class="inline-block w-2 h-2 bg-amber-500 rounded-full mr-1"></span>
+              Unsaved changes
+            </p>
+          </div>
+        </div>
 
-      <div class="flex items-center gap-3">
-        <!-- Save Draft Button -->
-        <button
-          @click="saveDraft"
-          class="btn btn-secondary"
-          :disabled="saving"
-        >
-          {{ saving ? 'Saving...' : 'Save Draft' }}
-        </button>
-        <!-- Publish Button -->
-        <button
-          v-if="post.status === 'draft' || isNewPost"
-          @click="publish"
-          class="btn btn-primary"
-          :disabled="saving"
-        >
-          Publish
-        </button>
-        <!-- Update Button (for published posts) -->
-        <button
-          v-else
-          @click="updatePost"
-          class="btn btn-primary"
-          :disabled="saving"
-        >
-          Update
-        </button>
+        <div class="flex items-center gap-3">
+          <!-- Save Draft Button -->
+          <button
+            @click="saveDraft"
+            class="btn btn-secondary"
+            :disabled="saving"
+          >
+            {{ saving ? 'Saving...' : 'Save Draft' }}
+          </button>
+          <!-- Publish Button -->
+          <button
+            v-if="post.status === 'draft' || isNewPost"
+            @click="publish"
+            class="btn btn-primary"
+            :disabled="saving"
+          >
+            Publish
+          </button>
+          <!-- Update Button (for published posts) -->
+          <button
+            v-else
+            @click="updatePost"
+            class="btn btn-primary"
+            :disabled="saving || !hasChanges"
+            :class="{ 'opacity-50 cursor-not-allowed': !hasChanges }"
+            :title="hasChanges ? 'Save your changes' : 'No changes to save'"
+          >
+            Update
+          </button>
+        </div>
       </div>
     </div>
 
@@ -328,7 +354,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TipTapEditor from '@/components/editor/TipTapEditor.vue'
 import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
@@ -351,7 +377,11 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const selectedTag = ref('')
 const showPublishConfirm = ref(false)
+const showUpdateConfirm = ref(false)
 const attachmentListRef = ref<InstanceType<typeof AttachmentList> | null>(null)
+
+// Store original post state for change detection
+const originalPost = ref<string>('')
 
 const categories = mockCategories
 const allTags = mockTags
@@ -382,6 +412,32 @@ const post = ref<Post>({
   metaTitle: '',
   metaDescription: '',
   isFeatured: false,
+})
+
+// Get a snapshot of post fields that we want to track for changes
+const getPostSnapshot = () => ({
+  title: post.value.title,
+  slug: post.value.slug,
+  content: post.value.content,
+  excerpt: post.value.excerpt,
+  featuredImage: post.value.featuredImage,
+  category: post.value.category?.id || null,
+  tags: post.value.tags.map(t => t.id).sort(),
+  metaTitle: post.value.metaTitle,
+  metaDescription: post.value.metaDescription,
+  readingTime: post.value.readingTime,
+  isFeatured: post.value.isFeatured,
+})
+
+// Check if post has unsaved changes (for published posts)
+const hasChanges = computed(() => {
+  if (isNewPost.value) return true  // New posts always allow save
+  if (!originalPost.value) return false  // Not loaded yet
+  
+  // Also consider if a new featured image file was selected
+  if (featuredImageFile.value) return true
+  
+  return JSON.stringify(getPostSnapshot()) !== originalPost.value
 })
 
 const availableTags = computed(() => {
@@ -463,7 +519,7 @@ const saveDraft = async () => {
       metaTitle: post.value.metaTitle,
       metaDescription: post.value.metaDescription,
       readingTimeMinutes: post.value.readingTime,
-      isFeatured: post.value.isFeatured,
+      isFeatured: post.value.isFeatured === true,  // Explicit boolean
     }
 
     savingMessage.value = isNewPost.value ? 'Creating draft...' : 'Updating draft...'
@@ -491,12 +547,24 @@ const saveDraft = async () => {
 
 // Show publish confirmation dialog
 const publish = () => {
-  if (!post.value.title || !post.value.content) {
-    toast.warning('Please fill in title and content')
+  // Validate required fields for publishing
+  if (!post.value.title?.trim()) {
+    toast.warning('Title is required for publishing')
     return
+  }
+  if (!post.value.slug?.trim()) {
+    // Auto-generate if empty
+    post.value.slug = post.value.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
   }
   if (!post.value.category) {
     toast.warning('Please select a category before publishing')
+    return
+  }
+  if (!post.value.tags || post.value.tags.length === 0) {
+    toast.warning('Please add at least one tag before publishing')
     return
   }
   showPublishConfirm.value = true
@@ -510,48 +578,33 @@ const confirmPublish = async () => {
   error.value = null
   
   try {
-    // Auto-generate slug if empty
-    if (!post.value.slug) {
-      post.value.slug = post.value.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
+    // Prepare data for API - same structure for both new and existing
+    const postData: CreatePostDto = {
+      id: isNewPost.value ? null : parseInt(post.value.id),  // null = create new, number = publish draft
+      title: post.value.title,
+      slug: post.value.slug,
+      content: post.value.content,
+      excerpt: post.value.excerpt,
+      categoryId: post.value.category ? parseInt(post.value.category.id) : null,
+      tagId: post.value.tags.map(tag => parseInt(tag.id)),
+      authorUsername: 'grummans',
+      metaTitle: post.value.metaTitle,
+      metaDescription: post.value.metaDescription,
+      readingTimeMinutes: post.value.readingTime,
+      isFeatured: post.value.isFeatured === true,  // Explicit boolean
     }
-
-    if (isNewPost.value) {
-      // For new posts: Create and publish directly
-      savingMessage.value = 'Creating and publishing post...'
-      
-      const postData: CreatePostDto = {
-        title: post.value.title,
-        slug: post.value.slug,
-        content: post.value.content,
-        excerpt: post.value.excerpt,
-        status: 'published',
-        categoryId: post.value.category ? parseInt(post.value.category.id) : null,
-        tagId: post.value.tags.map(tag => parseInt(tag.id)),
-        authorUsername: 'grummans',
-        metaTitle: post.value.metaTitle,
-        metaDescription: post.value.metaDescription,
-        readingTimeMinutes: post.value.readingTime,
-        isFeatured: post.value.isFeatured,
+    
+    savingMessage.value = isNewPost.value ? 'Creating and publishing post...' : 'Publishing post...'
+    const publishedPost = await postService.publish(postData, featuredImageFile.value || undefined)
+    featuredImageFile.value = null
+    
+    // Upload pending attachments if any
+    if (publishedPost?.id && attachmentListRef.value?.hasPendingFiles()) {
+      savingMessage.value = 'Uploading attachments...'
+      const result = await attachmentListRef.value.uploadPendingFiles(String(publishedPost.id))
+      if (result.failed > 0) {
+        toast.warning(`${result.success} file(s) uploaded, ${result.failed} failed`)
       }
-      
-      const createdPost = await postService.create(postData, featuredImageFile.value || undefined)
-      featuredImageFile.value = null
-      
-      // Upload pending attachments if any
-      if (createdPost?.id && attachmentListRef.value?.hasPendingFiles()) {
-        savingMessage.value = 'Uploading attachments...'
-        const result = await attachmentListRef.value.uploadPendingFiles(String(createdPost.id))
-        if (result.failed > 0) {
-          toast.warning(`${result.success} file(s) uploaded, ${result.failed} failed`)
-        }
-      }
-    } else {
-      // For existing drafts: Use publish endpoint
-      savingMessage.value = 'Publishing draft...'
-      await postService.publish(post.value.id)
     }
     
     toast.success('Post published successfully!')
@@ -564,42 +617,57 @@ const confirmPublish = async () => {
   }
 }
 
-// Update published post
-const updatePost = async () => {
-  if (!post.value.title || !post.value.content) {
-    toast.warning('Please fill in title and content')
+// Show update confirmation dialog
+const updatePost = () => {
+  // Validate required fields for updating published post
+  if (!post.value.title?.trim()) {
+    toast.warning('Title is required')
     return
   }
+  if (!post.value.slug?.trim()) {
+    // Auto-generate if empty
+    post.value.slug = post.value.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }
+  if (!post.value.category) {
+    toast.warning('Please select a category')
+    return
+  }
+  if (!post.value.tags || post.value.tags.length === 0) {
+    toast.warning('Please add at least one tag')
+    return
+  }
+  showUpdateConfirm.value = true
+}
 
+// Actually update after confirmation - uses PUT /{postId} endpoint
+const confirmUpdate = async () => {
+  showUpdateConfirm.value = false
   saving.value = true
   savingMessage.value = 'Updating post...'
   error.value = null
   
   try {
-    // Auto-generate slug if empty
-    if (!post.value.slug) {
-      post.value.slug = post.value.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-    }
-
-    const postData: CreatePostDto = {
+    // For updating published post, use PUT /{postId}
+    // Note: No id in body, it's in the URL path
+    const postData = {
       title: post.value.title,
       slug: post.value.slug,
       content: post.value.content,
       excerpt: post.value.excerpt,
-      status: 'published',
       categoryId: post.value.category ? parseInt(post.value.category.id) : null,
       tagId: post.value.tags.map(tag => parseInt(tag.id)),
       authorUsername: 'grummans',
       metaTitle: post.value.metaTitle,
       metaDescription: post.value.metaDescription,
       readingTimeMinutes: post.value.readingTime,
-      isFeatured: post.value.isFeatured,
+      isFeatured: post.value.isFeatured === true,  // Explicit boolean
     }
 
-    await postService.update(post.value.id, postData)
+    await postService.updatePublished(post.value.id, postData, featuredImageFile.value || undefined)
+    featuredImageFile.value = null
     
     toast.success('Post updated successfully!')
     router.push('/posts')
@@ -622,6 +690,8 @@ const loadPost = async () => {
     const postId = route.params.id as string
     const loadedPost = await postService.getById(postId)
     post.value = { ...loadedPost }
+    // Store original state for change detection
+    originalPost.value = JSON.stringify(getPostSnapshot())
   } catch (err: any) {
     error.value = err.message || 'Failed to load post'
     console.error('Error loading post:', err)
@@ -630,7 +700,19 @@ const loadPost = async () => {
   }
 }
 
+// Scroll detection for sticky header shadow
+const isScrolled = ref(false)
+
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 10
+}
+
 onMounted(() => {
   loadPost()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
