@@ -2,8 +2,8 @@
   <div>
     <!-- Page Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-      <p class="mt-2 text-gray-600 dark:text-gray-400">Welcome back! Here's what's happening with your blog.</p>
+      <h1 class="page-title text-3xl">Dashboard</h1>
+      <p class="mt-2 text-muted">Welcome back! Here's what's happening with your blog.</p>
     </div>
 
     <!-- Stats Grid -->
@@ -11,8 +11,8 @@
       <div class="card hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Posts</p>
-            <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ stats.totalPosts }}</p>
+            <p class="text-sm font-medium text-muted">Total Posts</p>
+            <p class="mt-2 text-3xl font-bold text-heading">{{ stats.totalPosts }}</p>
           </div>
           <div class="p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg">
             <svg class="w-8 h-8 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,8 +30,8 @@
       <div class="card hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Views</p>
-            <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ stats.totalViews.toLocaleString() }}</p>
+            <p class="text-sm font-medium text-muted">Total Views</p>
+            <p class="mt-2 text-3xl font-bold text-heading">{{ stats.totalViews.toLocaleString() }}</p>
           </div>
           <div class="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
             <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
             </svg>
           </div>
         </div>
-        <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+        <div class="mt-4 text-sm text-muted">
           Across all published posts
         </div>
       </div>
@@ -48,8 +48,8 @@
       <div class="card hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Comments</p>
-            <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ stats.totalComments }}</p>
+            <p class="text-sm font-medium text-muted">Comments</p>
+            <p class="mt-2 text-3xl font-bold text-heading">{{ stats.totalComments }}</p>
           </div>
           <div class="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
             <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +57,7 @@
             </svg>
           </div>
         </div>
-        <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+        <div class="mt-4 text-sm text-muted">
           User engagement
         </div>
       </div>
@@ -65,8 +65,8 @@
       <div class="card hover:shadow-md transition-shadow">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Reading Time</p>
-            <p class="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ avgReadingTime }} min</p>
+            <p class="text-sm font-medium text-muted">Avg. Reading Time</p>
+            <p class="mt-2 text-3xl font-bold text-heading">{{ avgReadingTime }} min</p>
           </div>
           <div class="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
             <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@
             </svg>
           </div>
         </div>
-        <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+        <div class="mt-4 text-sm text-muted">
           Per article
         </div>
       </div>
@@ -85,7 +85,7 @@
       <!-- Recent Posts -->
       <div class="card">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Recent Posts</h2>
+          <h2 class="text-xl text-heading">Recent Posts</h2>
           <router-link to="/posts" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
             View all
           </router-link>
@@ -147,7 +147,7 @@
 
       <!-- Views Chart -->
       <div class="card">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Top Posts by Views</h2>
+        <h2 class="text-xl text-heading mb-6">Top Posts by Views</h2>
         
         <!-- Column Chart -->
         <div class="h-80 flex items-end justify-between gap-2 px-4">

@@ -19,8 +19,8 @@
     <!-- Header -->
     <div class="mb-8 flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Categories</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Organize your posts by categories</p>
+        <h1 class="page-title text-3xl">Categories</h1>
+        <p class="mt-2 text-muted">Organize your posts by categories</p>
       </div>
       <button
         @click="openCreateModal"
@@ -39,7 +39,8 @@
         <div
           v-for="category in categories"
           :key="category.id"
-          class="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-600"
+          class="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-600 cursor-pointer"
+          @click="viewCategoryPosts(category)"
         >
           <!-- Icon -->
           <div class="w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center flex-shrink-0">
@@ -50,13 +51,13 @@
 
           <!-- Info -->
           <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h3 class="text-lg text-heading">
               {{ category.name }}
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+            <p class="text-sm text-muted">
               {{ category.description }}
             </p>
-            <div class="mt-1 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+            <div class="mt-1 flex items-center gap-3 text-xs text-muted">
               <span>Slug: {{ category.slug }}</span>
               <span>•</span>
               <span>{{ category.postCount }} posts</span>
@@ -66,8 +67,8 @@
           <!-- Actions -->
           <div class="flex gap-2">
             <button
-              @click="openEditModal(category)"
-              class="p-2 hover:bg-gray-200 dark:hover:bg-dark-600 rounded-lg transition-colors"
+              @click.stop="openEditModal(category)"
+              class="btn-icon-sm hover:bg-gray-200 dark:hover:bg-dark-600"
               title="Edit"
             >
               <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,8 +76,8 @@
               </svg>
             </button>
             <button
-              @click="deleteCategory(category)"
-              class="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              @click.stop="deleteCategory(category)"
+              class="btn-icon-sm hover:bg-red-100 dark:hover:bg-red-900/20"
               title="Delete"
             >
               <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +114,7 @@
 
         <form @submit.prevent="saveCategory" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Name *
             </label>
             <input
@@ -127,7 +128,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Slug *
             </label>
             <input
@@ -140,7 +141,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Description
             </label>
             <textarea
@@ -152,7 +153,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Color
             </label>
             <input
@@ -187,11 +188,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { categoryService, generateSlug, type Category, type CategoryRequest } from '@/services/categoryService'
 import { useToast } from '@/composables/useToast'
 import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
+const router = useRouter()
 const toast = useToast()
 
 const categories = ref<Category[]>([])
@@ -319,4 +322,12 @@ const confirmDelete = async () => {
 onMounted(() => {
   loadCategories()
 })
+
+// Navigate to posts filtered by category
+const viewCategoryPosts = (category: Category) => {
+  router.push({
+    path: '/posts',
+    query: { category: String(category.id) }
+  })
+}
 </script>

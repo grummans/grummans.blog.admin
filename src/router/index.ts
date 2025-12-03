@@ -35,12 +35,6 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/media',
-    name: 'media',
-    component: () => import('../views/MediaView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
     path: '/categories',
     name: 'categories',
     component: () => import('../views/CategoriesView.vue'),
@@ -56,12 +50,6 @@ const routes: RouteRecordRaw[] = [
     path: '/settings',
     name: 'settings',
     component: () => import('../views/SettingsView.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/editor-demo',
-    name: 'editor-demo',
-    component: () => import('../views/EditorDemoView.vue'),
     meta: { requiresAuth: true },
   },
 ]

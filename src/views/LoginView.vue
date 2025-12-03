@@ -8,7 +8,7 @@
           <h1 class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-2">
             Blog Admin
           </h1>
-          <p class="text-gray-600 dark:text-gray-400">
+          <p class="text-muted">
             Sign in to manage your blog
           </p>
         </div>
@@ -17,7 +17,7 @@
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Email -->
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label for="email" class="label">
               Email
             </label>
             <input
@@ -33,7 +33,7 @@
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label for="password" class="label">
               Password
             </label>
             <div class="relative">

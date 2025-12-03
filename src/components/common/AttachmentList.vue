@@ -1,9 +1,9 @@
 <template>
   <div class="card">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+      <h3 class="section-title">
         📎 Attachments
-        <span v-if="totalCount > 0" class="text-gray-500 dark:text-gray-400 font-normal">
+        <span v-if="totalCount > 0" class="text-muted font-normal">
           ({{ totalCount }})
         </span>
       </h3>
@@ -124,7 +124,7 @@
             :href="getDownloadUrl(attachment)"
             target="_blank"
             download
-            class="p-1.5 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-600"
+            class="btn-icon-sm hover:text-primary-600 dark:hover:text-primary-400"
             title="Download"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@
             v-if="!disabled"
             @click="confirmDelete(attachment)"
             :disabled="deleting === attachment.id"
-            class="p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-600 disabled:opacity-50"
+            class="btn-icon-sm hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
             title="Delete"
           >
             <svg v-if="deleting !== attachment.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
