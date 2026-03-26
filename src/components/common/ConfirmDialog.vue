@@ -40,7 +40,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <!-- Success Icon -->
-              <svg v-else-if="type === 'success'" class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg v-else-if="type === 'success'" class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <!-- Danger Icon -->
@@ -123,7 +123,7 @@ const iconBgClass = computed(() => {
     case 'warning':
       return 'bg-yellow-100 dark:bg-yellow-900/30'
     case 'success':
-      return 'bg-green-100 dark:bg-green-900/30'
+      return 'bg-amber-100 dark:bg-amber-900/30'
     case 'danger':
       return 'bg-red-100 dark:bg-red-900/30'
     default:
@@ -138,7 +138,7 @@ const confirmButtonClass = computed(() => {
     case 'warning':
       return 'bg-yellow-600 hover:bg-yellow-700 text-white'
     case 'success':
-      return 'bg-green-600 hover:bg-green-700 text-white'
+      return 'bg-amber-600 hover:bg-amber-700 text-white'
     default:
       return 'btn-primary'
   }

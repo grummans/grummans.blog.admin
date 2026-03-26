@@ -132,7 +132,7 @@
           v-if="filterStatus"
           class="badge"
           :class="{
-            'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300': filterStatus === 'published',
+            'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300': filterStatus === 'published',
             'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300': filterStatus === 'draft',
             'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300': filterStatus === 'scheduled'
           }"
@@ -231,7 +231,7 @@
               :class="[
                 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
                 post.status === 'published'
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
                   : post.status === 'draft'
                   ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                   : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'

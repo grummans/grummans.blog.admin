@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
-import DashboardView from '../views/DashboardView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -12,8 +11,13 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/',
+    redirect: '/dashboard',
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/dashboard',
     name: 'dashboard',
-    component: DashboardView,
+    component: () => import('../views/DashboardView.vue'),
     meta: { requiresAuth: true },
   },
   {
