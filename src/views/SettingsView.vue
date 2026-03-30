@@ -1,16 +1,16 @@
 <template>
   <div>
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">Settings</h1>
+    <h1 class="page-title text-3xl mb-8">Settings</h1>
 
     <div class="space-y-6">
       <!-- General Settings -->
       <div class="card">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">General Settings</h2>
+        <h2 class="text-xl text-heading mb-6">General Settings</h2>
         
         <form @submit.prevent="saveGeneral" class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="label">
                 Site Title
               </label>
               <input
@@ -22,7 +22,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="label">
                 Site URL
               </label>
               <input
@@ -35,7 +35,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Site Description
             </label>
             <textarea
@@ -47,7 +47,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Language
             </label>
             <select v-model="generalSettings.language" class="input">
@@ -68,11 +68,11 @@
 
       <!-- Appearance -->
       <div class="card">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Appearance</h2>
+        <h2 class="text-xl text-heading mb-6">Appearance</h2>
         
         <div class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+            <label class="label mb-4">
               Theme
             </label>
             <div class="grid grid-cols-3 gap-4">
@@ -132,7 +132,7 @@
 
       <!-- User Profile -->
       <div class="card">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">User Profile</h2>
+        <h2 class="text-xl text-heading mb-6">User Profile</h2>
         
         <form @submit.prevent="saveProfile" class="space-y-6">
           <div class="flex items-start gap-6">
@@ -153,7 +153,7 @@
 
             <div class="flex-1 space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label class="label">
                   Display Name
                 </label>
                 <input
@@ -164,7 +164,7 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label class="label">
                   Email
                 </label>
                 <input
@@ -175,7 +175,7 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label class="label">
                   Bio
                 </label>
                 <textarea
@@ -208,7 +208,7 @@
             </div>
             <button
               @click="clearAllData"
-              class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              class="btn-danger"
             >
               Clear Data
             </button>

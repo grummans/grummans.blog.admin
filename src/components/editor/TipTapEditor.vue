@@ -133,7 +133,7 @@
 
       <div class="toolbar-divider" />
 
-      <!-- Link & Image -->
+      <!-- Link & Media -->
       <div class="toolbar-group">
         <button
           @click="setLink"
@@ -153,6 +153,16 @@
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+        
+        <button
+          @click="addFile"
+          class="toolbar-btn"
+          title="Upload File (PDF, Documents, etc.)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
           </svg>
         </button>
       </div>
@@ -186,7 +196,17 @@
     </div>
 
     <!-- Editor Content -->
-    <editor-content :editor="editor" class="editor-content" />
+    <div class="relative">
+      <editor-content :editor="editor" class="editor-content" />
+      
+      <!-- Upload indicator -->
+      <div v-if="uploading" class="absolute inset-0 bg-white/80 dark:bg-dark-800/80 flex items-center justify-center backdrop-blur-sm">
+        <div class="text-center">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-2"></div>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Uploading file...</p>
+        </div>
+      </div>
+    </div>
 
     <!-- Character Count -->
     <div v-if="editor" class="editor-footer">
@@ -199,13 +219,14 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue'
+import { ref, onBeforeUnmount, watch } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import CharacterCount from '@tiptap/extension-character-count'
+import { mediaService } from '@/services/mediaService'
 
 interface Props {
   modelValue: string
@@ -219,6 +240,9 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
+
+const uploading = ref(false)
+const uploadProgress = ref(0)
 
 const editor = useEditor({
   content: props.modelValue,
@@ -239,6 +263,43 @@ const editor = useEditor({
   editorProps: {
     attributes: {
       class: 'prose prose-sm sm:prose lg:prose-lg dark:prose-invert max-w-none focus:outline-none min-h-[400px] p-4',
+    },
+    // Handle dropped files
+    handleDrop(view, event, slice, moved) {
+      if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        event.preventDefault()
+        const files = Array.from(event.dataTransfer.files)
+        
+        files.forEach(file => {
+          const category = mediaService.getFileCategory(file)
+          if (category === 'image') {
+            uploadAndInsertImage(file, view.state.selection.from)
+          } else {
+            uploadAndInsertFile(file, view.state.selection.from)
+          }
+        })
+        
+        return files.length > 0
+      }
+      return false
+    },
+    // Handle pasted files
+    handlePaste(view, event) {
+      const items = event.clipboardData?.items
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i]
+          if (item && item.type.startsWith('image/')) {
+            event.preventDefault()
+            const file = item.getAsFile()
+            if (file) {
+              uploadAndInsertImage(file, view.state.selection.from)
+            }
+            return true
+          }
+        }
+      }
+      return false
     },
   },
   onUpdate: ({ editor }) => {
@@ -269,11 +330,125 @@ const setLink = () => {
   editor.value?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
 }
 
-const addImage = () => {
-  const url = window.prompt('Enter image URL:')
-  if (url) {
-    editor.value?.chain().focus().setImage({ src: url }).run()
+// Upload and insert image
+const uploadAndInsertImage = async (file: File, pos?: number) => {
+  // Validate image
+  const validation = mediaService.validateImage(file)
+  if (!validation.valid) {
+    alert(validation.error)
+    return
   }
+
+  uploading.value = true
+  uploadProgress.value = 0
+
+  try {
+    // Upload to server and get URL
+    const url = await mediaService.upload(file, (percent) => {
+      uploadProgress.value = percent
+    })
+    
+    // Insert image into editor
+    if (pos !== undefined) {
+      editor.value?.chain().focus().insertContentAt(pos, {
+        type: 'image',
+        attrs: { src: url, alt: file.name }
+      }).run()
+    } else {
+      editor.value?.chain().focus().setImage({ src: url, alt: file.name }).run()
+    }
+  } catch (error: any) {
+    console.error('Image upload failed:', error)
+    alert(error.message || 'Failed to upload image')
+  } finally {
+    uploading.value = false
+    uploadProgress.value = 0
+  }
+}
+
+// Upload and insert file (non-image)
+const uploadAndInsertFile = async (file: File, pos?: number) => {
+  // Validate file
+  const validation = mediaService.validateFile(file)
+  if (!validation.valid) {
+    alert(validation.error)
+    return
+  }
+
+  uploading.value = true
+  uploadProgress.value = 0
+
+  try {
+    // Upload to server and get URL
+    const url = await mediaService.upload(file, (percent) => {
+      uploadProgress.value = percent
+    })
+    
+    const category = mediaService.getFileCategory(file)
+    const fileSize = mediaService.formatFileSize(file.size)
+    
+    // Create a nice file link with icon
+    const fileIcon = getFileIcon(category)
+    const linkText = `${fileIcon} ${file.name} (${fileSize})`
+    
+    if (pos !== undefined) {
+      editor.value?.chain().focus().insertContentAt(pos, `<p><a href="${url}" target="_blank" rel="noopener noreferrer" class="file-link">${linkText}</a></p>`).run()
+    } else {
+      editor.value?.chain().focus().insertContent(`<p><a href="${url}" target="_blank" rel="noopener noreferrer" class="file-link">${linkText}</a></p>`).run()
+    }
+  } catch (error: any) {
+    console.error('File upload failed:', error)
+    alert(error.message || 'Failed to upload file')
+  } finally {
+    uploading.value = false
+    uploadProgress.value = 0
+  }
+}
+
+// Get icon for file type
+const getFileIcon = (category: string): string => {
+  const icons: Record<string, string> = {
+    document: '📄',
+    video: '🎥',
+    audio: '🎵',
+    archive: '📦',
+    other: '📎'
+  }
+  return icons[category] || '📎'
+}
+
+// Add image via file picker
+const addImage = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.multiple = false
+  
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (file) {
+      uploadAndInsertImage(file)
+    }
+  }
+  
+  input.click()
+}
+
+// Add file via file picker (documents, videos, etc.)
+const addFile = () => {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z,.mp4,.mov,.avi,.mp3,.wav'
+  input.multiple = false
+  
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0]
+    if (file) {
+      uploadAndInsertFile(file)
+    }
+  }
+  
+  input.click()
 }
 
 onBeforeUnmount(() => {
@@ -345,5 +520,9 @@ onBeforeUnmount(() => {
 
 :deep(.ProseMirror blockquote) {
   @apply border-l-4 border-gray-300 dark:border-dark-600 pl-4 italic text-gray-700 dark:text-gray-300;
+}
+
+:deep(.ProseMirror a.file-link) {
+  @apply inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-dark-700 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors no-underline text-gray-900 dark:text-gray-100;
 }
 </style>

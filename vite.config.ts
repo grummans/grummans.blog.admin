@@ -19,6 +19,7 @@ export default defineConfig({
         target: 'http://localhost:8085',
         changeOrigin: true,
         secure: false,
+        // Don't rewrite - backend already expects /api prefix
       }
     }
   }

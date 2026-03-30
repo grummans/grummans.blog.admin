@@ -2,8 +2,8 @@
   <div>
     <div class="mb-8 flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Posts</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Manage your blog posts</p>
+        <h1 class="page-title text-3xl">Posts</h1>
+        <p class="mt-2 text-muted">Manage your blog posts</p>
       </div>
       <router-link to="/posts/new" class="btn btn-primary">
         <svg class="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -15,28 +15,142 @@
 
     <!-- Filters -->
     <div class="card mb-6">
-      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Search Input -->
         <div class="flex-1 min-w-[200px]">
-          <input
-            v-model="searchQuery"
-            type="search"
-            placeholder="Search posts..."
-            class="input text-sm"
-          />
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              v-model="searchQuery"
+              type="search"
+              placeholder="Search posts..."
+              class="input text-sm pl-9"
+            />
+          </div>
         </div>
-        <select v-model="filterStatus" class="input text-sm w-auto">
-          <option value="">All Status</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-          <option value="scheduled">Scheduled</option>
-        </select>
+        
+        <!-- Category Filter -->
+        <div class="relative">
+          <select v-model="filterCategory" class="input text-sm pl-3 pr-8 min-w-[140px] appearance-none">
+            <option value="">All Categories</option>
+            <option
+              v-for="category in categories"
+              :key="category.id"
+              :value="String(category.id)"
+            >
+              {{ category.name }}
+            </option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        
+        <!-- Tag Filter -->
+        <div class="relative">
+          <select v-model="filterTag" class="input text-sm pl-3 pr-8 min-w-[120px] appearance-none">
+            <option value="">All Tags</option>
+            <option
+              v-for="tag in allTags"
+              :key="tag.id"
+              :value="String(tag.id)"
+            >
+              {{ tag.name }}
+            </option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        
+        <!-- Status Filter -->
+        <div class="relative">
+          <select v-model="filterStatus" class="input text-sm pl-3 pr-8 min-w-[120px] appearance-none">
+            <option value="">All Status</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+        
+        <!-- Clear filters button -->
+        <button
+          v-if="filterCategory || filterTag || filterStatus || searchQuery"
+          @click="clearFilters"
+          class="btn-icon"
+          title="Clear all filters"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Active filters indicator -->
+      <div v-if="filterCategory || filterTag || filterStatus" class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs text-gray-500 dark:text-gray-400">Filters:</span>
+        
+        <!-- Category tag -->
+        <span 
+          v-if="filterCategory"
+          class="badge-primary"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          {{ getCategoryName(filterCategory) }}
+          <button @click="filterCategory = ''" class="ml-0.5 hover:text-primary-900 dark:hover:text-primary-100">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </span>
+        
+        <!-- Tag filter tag -->
+        <span 
+          v-if="filterTag"
+          class="badge-purple"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          {{ getTagName(filterTag) }}
+          <button @click="filterTag = ''" class="ml-0.5 hover:text-purple-900 dark:hover:text-purple-100">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </span>
+        
+        <!-- Status tag -->
+        <span 
+          v-if="filterStatus"
+          class="badge"
+          :class="{
+            'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300': filterStatus === 'published',
+            'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300': filterStatus === 'draft',
+            'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300': filterStatus === 'scheduled'
+          }"
+        >
+          {{ filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) }}
+          <button @click="filterStatus = ''" class="ml-0.5 hover:opacity-70">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </span>
       </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="card text-center py-12">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading posts...</p>
+      <p class="mt-4 text-muted">Loading posts...</p>
     </div>
 
     <!-- Error State -->
@@ -117,7 +231,7 @@
               :class="[
                 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
                 post.status === 'published'
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
                   : post.status === 'draft'
                   ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                   : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
@@ -196,23 +310,56 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      :visible="showDeleteConfirm"
+      title="Delete Post"
+      :message="`Are you sure you want to delete '${postToDelete?.title}'? This action cannot be undone.`"
+      type="danger"
+      confirmText="Delete"
+      cancelText="Cancel"
+      :loading="deleting"
+      @confirm="confirmDeletePost"
+      @cancel="showDeleteConfirm = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { postService } from '@/services/postService'
+import { categoryService, type Category } from '@/services/categoryService'
+import { tagService, type Tag } from '@/services/tagService'
+import { useToast } from '@/composables/useToast'
 import type { Post } from '@/mock/data'
+
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
 
 const searchQuery = ref('')
 const filterStatus = ref('')
+const filterCategory = ref('')  // Category filter
+const filterTag = ref('')  // Tag filter
 const currentPage = ref(1)
 const itemsPerPage = 5 // 5 posts per page
+
+// Categories and Tags for filter dropdowns
+const categories = ref<Category[]>([])
+const allTags = ref<Tag[]>([])
 
 // API state management
 const posts = ref<Post[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+// Delete confirmation state
+const showDeleteConfirm = ref(false)
+const postToDelete = ref<Post | null>(null)
+const deleting = ref(false)
 
 // Fetch posts from API
 const fetchPosts = async () => {
@@ -239,6 +386,20 @@ const filteredPosts = computed(() => {
   }
   
   let filteredList = [...posts.value]
+
+  // Filter by category
+  if (filterCategory.value) {
+    filteredList = filteredList.filter(post => 
+      post.category && String(post.category.id) === filterCategory.value
+    )
+  }
+
+  // Filter by tag
+  if (filterTag.value) {
+    filteredList = filteredList.filter(post => 
+      post.tags && post.tags.some(tag => String(tag.id) === filterTag.value)
+    )
+  }
 
   // Filter by status
   if (filterStatus.value) {
@@ -308,9 +469,58 @@ const displayPages = computed(() => {
 })
 
 // Reset to page 1 when filters change
-watch([searchQuery, filterStatus], () => {
+watch([searchQuery, filterStatus, filterCategory, filterTag], () => {
   currentPage.value = 1
 })
+
+// Watch for route query changes (when coming from Categories or Tags)
+watch(() => route.query.category, (newCategory) => {
+  filterCategory.value = newCategory ? String(newCategory) : ''
+}, { immediate: true })
+
+watch(() => route.query.tag, (newTag) => {
+  filterTag.value = newTag ? String(newTag) : ''
+}, { immediate: true })
+
+// Get category name by id
+const getCategoryName = (categoryId: string): string => {
+  const category = categories.value.find(c => String(c.id) === categoryId)
+  return category?.name || 'Unknown'
+}
+
+// Get tag name by id
+const getTagName = (tagId: string): string => {
+  const tag = allTags.value.find(t => String(t.id) === tagId)
+  return tag?.name || 'Unknown'
+}
+
+// Clear all filters
+const clearFilters = () => {
+  searchQuery.value = ''
+  filterStatus.value = ''
+  filterCategory.value = ''
+  filterTag.value = ''
+  // Also clear the URL query
+  router.replace({ query: {} })
+}
+
+// Load categories for filter dropdown
+const loadCategories = async () => {
+  try {
+    categories.value = await categoryService.getAll()
+  } catch (err) {
+    console.error('Failed to load categories:', err)
+  }
+}
+
+// Load tags for filter dropdown
+const loadTags = async () => {
+  try {
+    allTags.value = await tagService.getAll()
+  } catch (err) {
+    console.error('Failed to load tags:', err)
+  }
+}
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
@@ -324,20 +534,39 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString()
 }
 
-const deletePost = async (id: string) => {
-  if (confirm('Are you sure you want to delete this post?')) {
-    try {
-      await postService.delete(id)
-      // Refresh the posts list after deletion
-      await fetchPosts()
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete post')
-    }
+// Show delete confirmation dialog
+const deletePost = (id: string) => {
+  const post = posts.value.find(p => p.id === id)
+  if (post) {
+    postToDelete.value = post
+    showDeleteConfirm.value = true
+  }
+}
+
+// Actually delete after confirmation
+const confirmDeletePost = async () => {
+  if (!postToDelete.value) return
+  
+  deleting.value = true
+  
+  try {
+    await postService.delete(postToDelete.value.id)
+    toast.success(`Post "${postToDelete.value.title}" deleted successfully`)
+    showDeleteConfirm.value = false
+    postToDelete.value = null
+    // Refresh the posts list after deletion
+    await fetchPosts()
+  } catch (err: any) {
+    toast.error(err.message || 'Failed to delete post')
+  } finally {
+    deleting.value = false
   }
 }
 
 // Fetch posts on component mount
 onMounted(() => {
   fetchPosts()
+  loadCategories()
+  loadTags()
 })
 </script>
