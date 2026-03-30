@@ -1,59 +1,63 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-dark-900 transition-colors duration-200">
+  <div class="min-h-screen bg-stone-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
     <!-- Sidebar -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-dark-700 transform transition-transform duration-300 ease-in-out lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-50 w-64 bg-stone-50 dark:bg-zinc-900 border-r border-zinc-400 dark:border-zinc-800 transform transition-transform duration-200 ease-in-out lg:translate-x-0',
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       ]"
     >
       <!-- Logo -->
-      <div class="h-16 flex items-center px-6">
-        <h1 class="text-xl font-bold text-primary-600 dark:text-primary-400">
+      <div class="h-16 flex items-center px-6 border-b border-zinc-300 dark:border-zinc-800">
+        <router-link
+          to="/dashboard"
+          class="text-sm font-bold uppercase tracking-[0.12em] text-zinc-900 dark:text-primary-400 hover:opacity-80 transition-opacity"
+          @click="isSidebarOpen = false"
+        >
           Blog Admin
-        </h1>
+        </router-link>
       </div>
 
       <!-- Navigation -->
-      <nav class="px-4 pb-4 space-y-1">
+      <nav class="px-4 py-4 space-y-1">
         <router-link
           v-for="item in navigation"
           :key="item.name"
           :to="item.href"
-          class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+          class="flex items-center px-3 py-2 text-sm font-medium border-l-2 border-transparent transition-colors"
           :class="[
             $route.path === item.href
-              ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700'
+              ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-primary-400 border-l-primary-500'
+              : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 hover:border-l-zinc-500'
           ]"
         >
-          <component :is="item.icon" class="w-5 h-5 mr-3" />
+          <component :is="item.icon" class="w-4 h-4 mr-3" />
           {{ item.name }}
         </router-link>
       </nav>
 
       <!-- User Profile -->
-      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-dark-700">
+      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-zinc-300 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-900">
         <div class="relative">
           <button
             @click="isUserMenuOpen = !isUserMenuOpen"
-            class="flex items-center w-full hover:bg-gray-50 dark:hover:bg-dark-700 rounded-lg p-2 transition-colors"
+            class="flex items-center w-full hover:bg-zinc-100 dark:hover:bg-zinc-800 p-2 border border-zinc-300 dark:border-zinc-700 transition-colors"
           >
             <img
               :src="currentUser.avatar"
               :alt="currentUser.name"
-              class="w-10 h-10 rounded-full"
+              class="w-9 h-9 border border-zinc-400 dark:border-zinc-600"
             />
             <div class="ml-3 flex-1 min-w-0 text-left">
-              <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+              <p class="text-xs font-semibold uppercase tracking-wide text-zinc-900 dark:text-zinc-100 truncate">
                 {{ currentUser.name }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
                 {{ currentUser.email }}
               </p>
             </div>
             <svg
-              class="w-5 h-5 text-gray-400 transition-transform"
+              class="w-4 h-4 text-zinc-500 transition-transform"
               :class="{ 'rotate-180': isUserMenuOpen }"
               fill="none"
               stroke="currentColor"
@@ -74,12 +78,12 @@
           >
             <div
               v-if="isUserMenuOpen"
-              class="absolute bottom-full left-0 right-0 mb-2 mx-2 bg-white dark:bg-dark-700 rounded-lg shadow-lg border border-gray-200 dark:border-dark-600 overflow-hidden"
+              class="absolute bottom-full left-0 right-0 mb-2 bg-stone-100 dark:bg-zinc-950 border border-zinc-400 dark:border-zinc-700 overflow-hidden"
             >
               <router-link
                 to="/settings"
                 @click="isUserMenuOpen = false"
-                class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-600 transition-colors"
+                class="flex items-center px-4 py-3 text-xs uppercase tracking-wide text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -90,7 +94,7 @@
               <router-link
                 to="/settings"
                 @click="isUserMenuOpen = false"
-                class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-600 transition-colors border-t border-gray-100 dark:border-dark-600"
+                class="flex items-center px-4 py-3 text-xs uppercase tracking-wide text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-300 dark:border-zinc-700"
               >
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -100,7 +104,7 @@
 
               <button
                 @click="handleLogout"
-                class="flex items-center w-full px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border-t border-gray-100 dark:border-dark-600"
+                class="flex items-center w-full px-4 py-3 text-xs uppercase tracking-wide text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border-t border-zinc-300 dark:border-zinc-700"
               >
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -116,12 +120,12 @@
     <!-- Main Content -->
     <div class="lg:pl-64">
       <!-- Header -->
-      <header class="sticky top-0 z-40 bg-white dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700">
+      <header class="sticky top-0 z-40 bg-stone-100/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-300 dark:border-zinc-800">
         <div class="flex items-center justify-between h-16 px-4 sm:px-6">
           <!-- Mobile menu button -->
           <button
             @click="toggleSidebar"
-            class="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-700"
+            class="lg:hidden btn-icon"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -142,7 +146,7 @@
             <!-- Dark Mode Toggle -->
             <button
               @click="toggleDarkMode"
-              class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700 transition-colors"
+              class="btn-icon"
               title="Toggle dark mode"
             >
               <svg v-if="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,17 +160,23 @@
             <!-- New Post Button -->
             <router-link
               to="/posts/new"
-              class="btn btn-primary text-sm hidden sm:inline-flex"
+              class="btn btn-primary hidden sm:inline-flex"
             >
               New Post
             </router-link>
           </div>
         </div>
+        <div class="h-8 px-4 sm:px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.08em] border-t border-zinc-300 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
+          <span>Normal</span>
+          <span>{{ $route.name }}</span>
+        </div>
       </header>
 
       <!-- Page Content -->
       <main class="p-4 sm:p-6 lg:p-8">
-        <slot />
+        <div class="border border-zinc-300 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-900 min-h-[calc(100vh-9rem)] p-4 sm:p-6">
+          <slot />
+        </div>
       </main>
     </div>
 
@@ -174,7 +184,7 @@
     <div
       v-if="isSidebarOpen"
       @click="toggleSidebar"
-      class="fixed inset-0 z-40 bg-gray-900/50 lg:hidden"
+      class="fixed inset-0 z-40 bg-zinc-950/60 lg:hidden"
     />
   </div>
 </template>
@@ -205,19 +215,9 @@ const handleLogout = () => {
 // Navigation items
 const navigation = [
   {
-    name: 'Dashboard',
-    href: '/',
-    icon: 'DashboardIcon',
-  },
-  {
     name: 'Posts',
     href: '/posts',
     icon: 'PostsIcon',
-  },
-  {
-    name: 'Media',
-    href: '/media',
-    icon: 'MediaIcon',
   },
   {
     name: 'Categories',
@@ -237,16 +237,8 @@ const navigation = [
 ]
 
 // Simple icon components (inline)
-const DashboardIcon = {
-  template: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>`
-}
-
 const PostsIcon = {
   template: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`
-}
-
-const MediaIcon = {
-  template: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`
 }
 
 const CategoriesIcon = {

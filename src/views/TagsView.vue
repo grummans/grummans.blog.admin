@@ -1,10 +1,26 @@
 <template>
-  <div>
+  <div class="relative">
+    <!-- Loading Overlay -->
+    <LoadingOverlay :visible="loading" message="Loading tags..." />
+
+    <!-- Delete Confirm Dialog -->
+    <ConfirmDialog
+      v-if="tagToDelete"
+      :visible="showDeleteConfirm"
+      title="Delete Tag"
+      :message="`Are you sure you want to delete '${tagToDelete.name}'?${tagToDelete.postCount ? ` This tag is used in ${tagToDelete.postCount} post${tagToDelete.postCount > 1 ? 's' : ''}.` : ''}`"
+      type="danger"
+      confirmText="Yes, Delete"
+      cancelText="Cancel"
+      @confirm="confirmDelete"
+      @cancel="showDeleteConfirm = false"
+    />
+
     <!-- Header -->
     <div class="mb-8 flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Tags</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Manage post tags for better organization</p>
+        <h1 class="page-title text-3xl">Tags</h1>
+        <p class="mt-2 text-muted">Manage post tags for better organization</p>
       </div>
       <button
         @click="openCreateModal"
@@ -33,28 +49,29 @@
         <div
           v-for="tag in filteredTags"
           :key="tag.id"
-          class="group relative inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 rounded-full transition-colors"
+          class="group relative inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 rounded-full transition-colors cursor-pointer"
+          @click="viewTagPosts(tag)"
         >
-          <span class="font-medium text-gray-900 dark:text-gray-100">{{ tag.name }}</span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">{{ tag.postCount }}</span>
+          <span class="font-medium text-heading">{{ tag.name }}</span>
+          <span class="text-xs text-muted">{{ tag.postCount ?? 0 }} posts</span>
           
           <!-- Actions (shown on hover) -->
-          <div class="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div class="flex gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
-              @click="openEditModal(tag)"
+              @click.stop="openEditModal(tag)"
               class="p-1 hover:bg-gray-300 dark:hover:bg-dark-500 rounded"
               title="Edit"
             >
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </button>
             <button
-              @click="deleteTag(tag)"
+              @click.stop="deleteTag(tag)"
               class="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded"
               title="Delete"
             >
-              <svg class="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -90,7 +107,7 @@
 
         <form @submit.prevent="saveTag" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Name *
             </label>
             <input
@@ -104,7 +121,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Slug *
             </label>
             <input
@@ -121,14 +138,16 @@
               type="button"
               @click="showModal = false"
               class="btn btn-secondary"
+              :disabled="saving"
             >
               Cancel
             </button>
             <button
               type="submit"
               class="btn btn-primary"
+              :disabled="saving"
             >
-              {{ editingTag ? 'Update' : 'Create' }}
+              {{ saving ? 'Saving...' : (editingTag ? 'Update' : 'Create') }}
             </button>
           </div>
         </form>
@@ -138,16 +157,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { mockTags } from '@/mock/data'
-import type { Tag } from '@/mock/data'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { tagService, generateSlug, type Tag, type TagRequest } from '@/services/tagService'
+import { useToast } from '@/composables/useToast'
+import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
-const tags = ref([...mockTags])
+const router = useRouter()
+const toast = useToast()
+
+const tags = ref<Tag[]>([])
 const searchQuery = ref('')
 const showModal = ref(false)
 const editingTag = ref<Tag | null>(null)
+const editingTagId = ref<number | null>(null)
+const loading = ref(false)
+const saving = ref(false)
+const showDeleteConfirm = ref(false)
+const tagToDelete = ref<Tag | null>(null)
 
-const formData = ref({
+const formData = ref<TagRequest>({
   name: '',
   slug: '',
 })
@@ -162,8 +192,22 @@ const filteredTags = computed(() => {
   )
 })
 
+// Load tags from API
+const loadTags = async () => {
+  loading.value = true
+  try {
+    tags.value = await tagService.getAll()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to load tags')
+    console.error('Error loading tags:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
 const openCreateModal = () => {
   editingTag.value = null
+  editingTagId.value = null
   formData.value = {
     name: '',
     slug: '',
@@ -171,59 +215,94 @@ const openCreateModal = () => {
   showModal.value = true
 }
 
-const openEditModal = (tag: Tag) => {
-  editingTag.value = tag
-  formData.value = {
-    name: tag.name,
-    slug: tag.slug,
+const openEditModal = async (tag: Tag) => {
+  editingTagId.value = tag.id
+  
+  loading.value = true
+  try {
+    const fullTag = await tagService.getById(tag.id)
+    editingTag.value = fullTag
+    formData.value = {
+      name: fullTag.name,
+      slug: fullTag.slug,
+    }
+    showModal.value = true
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to load tag details')
+  } finally {
+    loading.value = false
   }
-  showModal.value = true
 }
 
 const autoGenerateSlug = () => {
   if (!editingTag.value) {
-    formData.value.slug = formData.value.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
+    formData.value.slug = generateSlug(formData.value.name)
   }
 }
 
-const saveTag = () => {
-  if (editingTag.value) {
-    // Update existing
-    const index = tags.value.findIndex(t => t.id === editingTag.value!.id)
-    if (index !== -1) {
-      tags.value[index] = {
-        ...tags.value[index]!,
-        name: formData.value.name,
-        slug: formData.value.slug,
-      }
-    }
-  } else {
-    // Create new
-    const newTag: Tag = {
-      id: String(tags.value.length + 1),
-      ...formData.value,
-      postCount: 0,
-    }
-    tags.value.push(newTag)
+const saveTag = async () => {
+  // Validate
+  if (!formData.value.name.trim()) {
+    toast.warning('Tag name is required')
+    return
+  }
+  if (!formData.value.slug.trim()) {
+    toast.warning('Tag slug is required')
+    return
   }
 
-  showModal.value = false
+  saving.value = true
+  try {
+    if (editingTagId.value) {
+      // Update existing
+      await tagService.update(editingTagId.value, formData.value)
+      toast.success('Tag updated successfully')
+    } else {
+      // Create new
+      await tagService.create(formData.value)
+      toast.success('Tag created successfully')
+    }
+    
+    showModal.value = false
+    await loadTags()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to save tag')
+    console.error('Error saving tag:', error)
+  } finally {
+    saving.value = false
+  }
 }
 
 const deleteTag = (tag: Tag) => {
-  if (tag.postCount > 0) {
-    if (!confirm(`This tag is used in ${tag.postCount} posts. Delete anyway?`)) {
-      return
-    }
-  } else {
-    if (!confirm(`Delete "${tag.name}"?`)) {
-      return
-    }
-  }
+  tagToDelete.value = tag
+  showDeleteConfirm.value = true
+}
+
+const confirmDelete = async () => {
+  if (!tagToDelete.value) return
   
-  tags.value = tags.value.filter(t => t.id !== tag.id)
+  showDeleteConfirm.value = false
+  try {
+    await tagService.delete(tagToDelete.value.id)
+    toast.success('Tag deleted successfully')
+    await loadTags()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to delete tag')
+  } finally {
+    tagToDelete.value = null
+  }
+}
+
+// Load on mount
+onMounted(() => {
+  loadTags()
+})
+
+// Navigate to posts filtered by tag
+const viewTagPosts = (tag: Tag) => {
+  router.push({
+    path: '/posts',
+    query: { tag: String(tag.id) }
+  })
 }
 </script>

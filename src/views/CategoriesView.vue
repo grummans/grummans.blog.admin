@@ -1,10 +1,26 @@
 <template>
-  <div>
+  <div class="relative">
+    <!-- Loading Overlay -->
+    <LoadingOverlay :visible="loading" message="Loading categories..." />
+
+    <!-- Delete Confirm Dialog -->
+    <ConfirmDialog
+      v-if="categoryToDelete"
+      :visible="showDeleteConfirm"
+      title="Delete Category"
+      :message="`Are you sure you want to delete '${categoryToDelete.name}'?${categoryToDelete.postCount ? ` This category has ${categoryToDelete.postCount} post${categoryToDelete.postCount > 1 ? 's' : ''}.` : ''}`"
+      type="danger"
+      confirmText="Yes, Delete"
+      cancelText="Cancel"
+      @confirm="confirmDelete"
+      @cancel="showDeleteConfirm = false"
+    />
+
     <!-- Header -->
     <div class="mb-8 flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Categories</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Organize your posts by categories</p>
+        <h1 class="page-title text-3xl">Categories</h1>
+        <p class="mt-2 text-muted">Organize your posts by categories</p>
       </div>
       <button
         @click="openCreateModal"
@@ -23,7 +39,8 @@
         <div
           v-for="category in categories"
           :key="category.id"
-          class="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-600"
+          class="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-700 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-dark-600 cursor-pointer"
+          @click="viewCategoryPosts(category)"
         >
           <!-- Icon -->
           <div class="w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center flex-shrink-0">
@@ -34,13 +51,13 @@
 
           <!-- Info -->
           <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h3 class="text-lg text-heading">
               {{ category.name }}
             </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
+            <p class="text-sm text-muted">
               {{ category.description }}
             </p>
-            <div class="mt-1 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+            <div class="mt-1 flex items-center gap-3 text-xs text-muted">
               <span>Slug: {{ category.slug }}</span>
               <span>•</span>
               <span>{{ category.postCount }} posts</span>
@@ -50,8 +67,8 @@
           <!-- Actions -->
           <div class="flex gap-2">
             <button
-              @click="openEditModal(category)"
-              class="p-2 hover:bg-gray-200 dark:hover:bg-dark-600 rounded-lg transition-colors"
+              @click.stop="openEditModal(category)"
+              class="btn-icon-sm hover:bg-gray-200 dark:hover:bg-dark-600"
               title="Edit"
             >
               <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,8 +76,8 @@
               </svg>
             </button>
             <button
-              @click="deleteCategory(category)"
-              class="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              @click.stop="deleteCategory(category)"
+              class="btn-icon-sm hover:bg-red-100 dark:hover:bg-red-900/20"
               title="Delete"
             >
               <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +114,7 @@
 
         <form @submit.prevent="saveCategory" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Name *
             </label>
             <input
@@ -111,7 +128,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Slug *
             </label>
             <input
@@ -124,7 +141,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="label">
               Description
             </label>
             <textarea
@@ -135,19 +152,32 @@
             />
           </div>
 
+          <div>
+            <label class="label">
+              Color
+            </label>
+            <input
+              v-model="formData.color"
+              type="color"
+              class="h-10 w-full rounded-lg cursor-pointer"
+            />
+          </div>
+
           <div class="flex justify-end gap-3 pt-4">
             <button
               type="button"
               @click="showModal = false"
               class="btn btn-secondary"
+              :disabled="saving"
             >
               Cancel
             </button>
             <button
               type="submit"
               class="btn btn-primary"
+              :disabled="saving"
             >
-              {{ editingCategory ? 'Update' : 'Create' }}
+              {{ saving ? 'Saving...' : (editingCategory ? 'Update' : 'Create') }}
             </button>
           </div>
         </form>
@@ -157,85 +187,147 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { mockCategories } from '@/mock/data'
-import type { Category } from '@/mock/data'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { categoryService, generateSlug, type Category, type CategoryRequest } from '@/services/categoryService'
+import { useToast } from '@/composables/useToast'
+import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
-const categories = ref([...mockCategories])
+const router = useRouter()
+const toast = useToast()
+
+const categories = ref<Category[]>([])
 const showModal = ref(false)
 const editingCategory = ref<Category | null>(null)
+const editingCategoryId = ref<number | null>(null)
+const loading = ref(false)
+const saving = ref(false)
+const showDeleteConfirm = ref(false)
+const categoryToDelete = ref<Category | null>(null)
 
-const formData = ref({
+const formData = ref<CategoryRequest>({
   name: '',
   slug: '',
   description: '',
+  color: '#3B82F6',
 })
+
+// Load categories from API
+const loadCategories = async () => {
+  loading.value = true
+  try {
+    categories.value = await categoryService.getAll()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to load categories')
+    console.error('Error loading categories:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 const openCreateModal = () => {
   editingCategory.value = null
+  editingCategoryId.value = null
   formData.value = {
     name: '',
     slug: '',
     description: '',
+    color: '#3B82F6',
   }
   showModal.value = true
 }
 
-const openEditModal = (category: Category) => {
-  editingCategory.value = category
-  formData.value = {
-    name: category.name,
-    slug: category.slug,
-    description: category.description,
+const openEditModal = async (category: Category) => {
+  editingCategoryId.value = category.id
+  
+  loading.value = true
+  try {
+    const fullCategory = await categoryService.getById(category.id)
+    editingCategory.value = fullCategory
+    formData.value = {
+      name: fullCategory.name,
+      slug: fullCategory.slug,
+      description: fullCategory.description || '',
+      color: fullCategory.color || '#3B82F6',
+    }
+    showModal.value = true
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to load category details')
+  } finally {
+    loading.value = false
   }
-  showModal.value = true
 }
 
 const autoGenerateSlug = () => {
   if (!editingCategory.value) {
-    formData.value.slug = formData.value.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
+    formData.value.slug = generateSlug(formData.value.name)
   }
 }
 
-const saveCategory = () => {
-  if (editingCategory.value) {
-    // Update existing
-    const index = categories.value.findIndex(c => c.id === editingCategory.value!.id)
-    if (index !== -1) {
-      categories.value[index] = {
-        ...categories.value[index]!,
-        name: formData.value.name,
-        slug: formData.value.slug,
-        description: formData.value.description,
-      }
-    }
-  } else {
-    // Create new
-    const newCategory: Category = {
-      id: String(categories.value.length + 1),
-      ...formData.value,
-      postCount: 0,
-    }
-    categories.value.push(newCategory)
+const saveCategory = async () => {
+  // Validate
+  if (!formData.value.name.trim()) {
+    toast.warning('Category name is required')
+    return
+  }
+  if (!formData.value.slug.trim()) {
+    toast.warning('Category slug is required')
+    return
   }
 
-  showModal.value = false
+  saving.value = true
+  try {
+    if (editingCategoryId.value) {
+      // Update existing
+      await categoryService.update(editingCategoryId.value, formData.value)
+      toast.success('Category updated successfully')
+    } else {
+      // Create new
+      await categoryService.create(formData.value)
+      toast.success('Category created successfully')
+    }
+    
+    showModal.value = false
+    await loadCategories()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to save category')
+    console.error('Error saving category:', error)
+  } finally {
+    saving.value = false
+  }
 }
 
 const deleteCategory = (category: Category) => {
-  if (category.postCount > 0) {
-    if (!confirm(`This category has ${category.postCount} posts. Delete anyway?`)) {
-      return
-    }
-  } else {
-    if (!confirm(`Delete "${category.name}"?`)) {
-      return
-    }
-  }
+  categoryToDelete.value = category
+  showDeleteConfirm.value = true
+}
+
+const confirmDelete = async () => {
+  if (!categoryToDelete.value) return
   
-  categories.value = categories.value.filter(c => c.id !== category.id)
+  showDeleteConfirm.value = false
+  try {
+    await categoryService.delete(categoryToDelete.value.id)
+    toast.success('Category deleted successfully')
+    await loadCategories()
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to delete category')
+  } finally {
+    categoryToDelete.value = null
+  }
+}
+
+// Load on mount
+onMounted(() => {
+  loadCategories()
+})
+
+// Navigate to posts filtered by category
+const viewCategoryPosts = (category: Category) => {
+  router.push({
+    path: '/posts',
+    query: { category: String(category.id) }
+  })
 }
 </script>
