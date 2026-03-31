@@ -30,17 +30,20 @@ RUN npm run build
 # Use a lightweight Nginx image to serve the built application
 FROM nginxinc/nginx-unprivileged:${NGINX_VERSION} AS runner
 
+# Switch to root to install packages
+USER root
+
+# Install CA certificates for SSL/TLS verification
+RUN apk add --no-cache ca-certificates
+
 # Copy the built application from the builder stage to Nginx's default HTML directory
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Use a built-in non-root user for better security
-USER nginx
-
-# Copy custom Nginx configuration
+# Copy custom Nginx configuration (must be before USER)
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy public assets with appropriate ownership
-COPY --chown=nginx:nginx --from=builder /app/dist /usr/share/nginx/html
+# Use a built-in non-root user for better security
+USER nginx
 
 # Expose port
 EXPOSE 5173
