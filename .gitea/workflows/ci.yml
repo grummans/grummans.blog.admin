@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest # Ensure your Gitea runner is configured with this label or Change it to your runner label
+    env: 
+      RUNNER_TOOL_CACHE: /toolcache
 
     steps:
       - name: Checkout code
@@ -22,8 +24,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+      - name: Cache npm
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
 
       - name: Install dependencies
         run: npm ci --prefer-offline
