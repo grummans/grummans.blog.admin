@@ -7,18 +7,18 @@
   --color-heading: #3c3836;
   --color-text: #504945;
   --section-gap: 120px;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #1d2021;
-    --color-background-soft: #282828;
-    --color-background-mute: #3c3836;
-    --color-border: #504945;
-    --color-border-hover: #665c54;
-    --color-heading: #fbf1c7;
-    --color-text: #ebdbb2;
-  }
+.dark {
+  --color-background: #1d2021;
+  --color-background-soft: #282828;
+  --color-background-mute: #3c3836;
+  --color-border: #504945;
+  --color-border-hover: #665c54;
+  --color-heading: #fbf1c7;
+  --color-text: #ebdbb2;
+  color-scheme: dark;
 }
 
 *,

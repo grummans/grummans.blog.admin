@@ -18,16 +18,16 @@
           <!-- Email -->
           <div>
             <label for="email" class="label">
-              Email
+              Username
             </label>
             <input
               id="email"
               v-model="loginForm.email"
-              type="email"
+              type="text"
               required
-              autocomplete="email"
+              autocomplete="username"
               class="input"
-              placeholder="admin@blog.com"
+              placeholder="grummans"
             />
           </div>
 
@@ -62,21 +62,6 @@
             </div>
           </div>
 
-          <!-- Remember Me & Forgot Password -->
-          <div class="flex items-center justify-between">
-            <label class="flex items-center">
-              <input
-                v-model="loginForm.remember"
-                type="checkbox"
-                class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-dark-600 dark:bg-dark-700"
-              />
-              <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Remember me</span>
-            </label>
-            <a href="#" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
-              Forgot password?
-            </a>
-          </div>
-
           <!-- Submit Button -->
           <button
             type="submit"
@@ -94,16 +79,6 @@
           </button>
         </form>
 
-        <!-- Demo Credentials -->
-        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p class="text-sm text-blue-800 dark:text-blue-300 font-medium mb-2">
-            🔐 Demo Credentials:
-          </p>
-          <p class="text-xs text-blue-700 dark:text-blue-400">
-            Email: <code class="bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded">admin@blog.com</code><br/>
-            Password: <code class="bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded">admin123</code>
-          </p>
-        </div>
       </div>
 
       <!-- Dark Mode Toggle -->
@@ -136,7 +111,6 @@ const { isDark, toggleDarkMode } = useDarkMode()
 const loginForm = ref({
   email: '',
   password: '',
-  remember: false,
 })
 
 const showPassword = ref(false)

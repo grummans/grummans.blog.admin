@@ -1,17 +1,28 @@
 <template>
-  <div class="min-h-screen bg-stone-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
+  <div class="min-h-screen bg-dark-50 dark:bg-dark-950 text-dark-900 dark:text-dark-100 transition-colors duration-200">
+    <ConfirmDialog
+      :visible="showLogoutConfirm"
+      title="Logout"
+      message="Are you sure you want to logout?"
+      type="warning"
+      confirmText="Logout"
+      cancelText="Cancel"
+      @confirm="confirmLogout"
+      @cancel="showLogoutConfirm = false"
+    />
+
     <!-- Sidebar -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 w-64 bg-stone-50 dark:bg-zinc-900 border-r border-zinc-400 dark:border-zinc-800 transform transition-transform duration-200 ease-in-out lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-50 w-64 bg-dark-50 dark:bg-dark-900 border-r border-dark-300 dark:border-dark-800 transform transition-transform duration-200 ease-in-out lg:translate-x-0',
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       ]"
     >
       <!-- Logo -->
-      <div class="h-16 flex items-center px-6 border-b border-zinc-300 dark:border-zinc-800">
+      <div class="h-16 flex items-center px-6 border-b border-dark-300 dark:border-dark-800">
         <router-link
           to="/dashboard"
-          class="text-sm font-bold uppercase tracking-[0.12em] text-zinc-900 dark:text-primary-400 hover:opacity-80 transition-opacity"
+          class="text-sm font-bold uppercase tracking-[0.12em] text-dark-900 dark:text-primary-400 hover:opacity-80 transition-opacity"
           @click="isSidebarOpen = false"
         >
           Blog Admin
@@ -27,8 +38,8 @@
           class="flex items-center px-3 py-2 text-sm font-medium border-l-2 border-transparent transition-colors"
           :class="[
             $route.path === item.href
-              ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-primary-400 border-l-primary-500'
-              : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 hover:border-l-zinc-500'
+              ? 'bg-dark-100 dark:bg-dark-800 text-dark-900 dark:text-primary-400 border-l-primary-500'
+              : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800/70 hover:border-l-dark-500'
           ]"
         >
           <component :is="item.icon" class="w-4 h-4 mr-3" />
@@ -37,27 +48,27 @@
       </nav>
 
       <!-- User Profile -->
-      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-zinc-300 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-900">
+      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-300 dark:border-dark-800 bg-dark-50 dark:bg-dark-900">
         <div class="relative">
           <button
             @click="isUserMenuOpen = !isUserMenuOpen"
-            class="flex items-center w-full hover:bg-zinc-100 dark:hover:bg-zinc-800 p-2 border border-zinc-300 dark:border-zinc-700 transition-colors"
+            class="flex items-center w-full hover:bg-dark-100 dark:hover:bg-dark-800 p-2 border border-dark-300 dark:border-dark-700 transition-colors"
           >
             <img
               :src="currentUser.avatar"
               :alt="currentUser.name"
-              class="w-9 h-9 border border-zinc-400 dark:border-zinc-600"
+              class="w-9 h-9 border border-dark-300 dark:border-dark-600"
             />
             <div class="ml-3 flex-1 min-w-0 text-left">
-              <p class="text-xs font-semibold uppercase tracking-wide text-zinc-900 dark:text-zinc-100 truncate">
+              <p class="text-xs font-semibold uppercase tracking-wide text-dark-900 dark:text-dark-100 truncate">
                 {{ currentUser.name }}
               </p>
-              <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              <p class="text-[11px] text-dark-600 dark:text-dark-400 truncate">
                 {{ currentUser.email }}
               </p>
             </div>
             <svg
-              class="w-4 h-4 text-zinc-500 transition-transform"
+              class="w-4 h-4 text-dark-500 transition-transform"
               :class="{ 'rotate-180': isUserMenuOpen }"
               fill="none"
               stroke="currentColor"
@@ -78,12 +89,12 @@
           >
             <div
               v-if="isUserMenuOpen"
-              class="absolute bottom-full left-0 right-0 mb-2 bg-stone-100 dark:bg-zinc-950 border border-zinc-400 dark:border-zinc-700 overflow-hidden"
+              class="absolute bottom-full left-0 right-0 mb-2 bg-dark-100 dark:bg-dark-950 border border-dark-300 dark:border-dark-700 overflow-hidden"
             >
               <router-link
                 to="/settings"
                 @click="isUserMenuOpen = false"
-                class="flex items-center px-4 py-3 text-xs uppercase tracking-wide text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                class="flex items-center px-4 py-3 text-xs uppercase tracking-wide text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors"
               >
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -94,7 +105,7 @@
               <router-link
                 to="/settings"
                 @click="isUserMenuOpen = false"
-                class="flex items-center px-4 py-3 text-xs uppercase tracking-wide text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors border-t border-zinc-300 dark:border-zinc-700"
+                class="flex items-center px-4 py-3 text-xs uppercase tracking-wide text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors border-t border-dark-300 dark:border-dark-700"
               >
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -104,7 +115,7 @@
 
               <button
                 @click="handleLogout"
-                class="flex items-center w-full px-4 py-3 text-xs uppercase tracking-wide text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border-t border-zinc-300 dark:border-zinc-700"
+                class="flex items-center w-full px-4 py-3 text-xs uppercase tracking-wide text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border-t border-dark-300 dark:border-dark-700"
               >
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -120,7 +131,7 @@
     <!-- Main Content -->
     <div class="lg:pl-64">
       <!-- Header -->
-      <header class="sticky top-0 z-40 bg-stone-100/90 dark:bg-zinc-950/90 backdrop-blur border-b border-zinc-300 dark:border-zinc-800">
+      <header class="sticky top-0 z-40 bg-dark-50/90 dark:bg-dark-950/90 backdrop-blur border-b border-dark-300 dark:border-dark-800">
         <div class="flex items-center justify-between h-16 px-4 sm:px-6">
           <!-- Mobile menu button -->
           <button
@@ -166,7 +177,7 @@
             </router-link>
           </div>
         </div>
-        <div class="h-8 px-4 sm:px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.08em] border-t border-zinc-300 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
+        <div class="h-8 px-4 sm:px-6 flex items-center justify-between text-[11px] uppercase tracking-[0.08em] border-t border-dark-300 dark:border-dark-800 text-dark-600 dark:text-dark-400">
           <span>Normal</span>
           <span>{{ $route.name }}</span>
         </div>
@@ -174,7 +185,7 @@
 
       <!-- Page Content -->
       <main class="p-4 sm:p-6 lg:p-8">
-        <div class="border border-zinc-300 dark:border-zinc-800 bg-stone-50 dark:bg-zinc-900 min-h-[calc(100vh-9rem)] p-4 sm:p-6">
+        <div class="border border-dark-300 dark:border-dark-800 bg-dark-50 dark:bg-dark-900 min-h-[calc(100vh-9rem)] p-4 sm:p-6">
           <slot />
         </div>
       </main>
@@ -184,7 +195,7 @@
     <div
       v-if="isSidebarOpen"
       @click="toggleSidebar"
-      class="fixed inset-0 z-40 bg-zinc-950/60 lg:hidden"
+      class="fixed inset-0 z-40 bg-dark-950/60 lg:hidden"
     />
   </div>
 </template>
@@ -194,11 +205,13 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '@/composables/useDarkMode'
 import { mockAuthors } from '@/mock/data'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 const router = useRouter()
 const { isDark, toggleDarkMode } = useDarkMode()
 const isSidebarOpen = ref(false)
 const isUserMenuOpen = ref(false)
+const showLogoutConfirm = ref(false)
 const currentUser = mockAuthors[0]!
 
 const toggleSidebar = () => {
@@ -206,10 +219,14 @@ const toggleSidebar = () => {
 }
 
 const handleLogout = () => {
-  if (confirm('Are you sure you want to logout?')) {
-    localStorage.removeItem('isAuthenticated')
-    router.push('/login')
-  }
+  isUserMenuOpen.value = false
+  showLogoutConfirm.value = true
+}
+
+const confirmLogout = () => {
+  showLogoutConfirm.value = false
+  localStorage.removeItem('isAuthenticated')
+  router.push('/login')
 }
 
 // Navigation items
