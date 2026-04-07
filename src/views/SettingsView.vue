@@ -1,5 +1,17 @@
 <template>
   <div>
+    <PromptDialog
+      :visible="showAvatarPrompt"
+      title="Change Avatar"
+      message="Enter a valid avatar image URL"
+      placeholder="https://example.com/avatar.jpg"
+      :initial-value="profileSettings.avatar"
+      confirm-text="Apply"
+      cancel-text="Cancel"
+      @confirm="applyAvatarUrl"
+      @cancel="showAvatarPrompt = false"
+    />
+
     <h1 class="page-title text-3xl mb-8">Settings</h1>
 
     <div class="space-y-6">
@@ -8,30 +20,16 @@
         <h2 class="text-xl text-heading mb-6">General Settings</h2>
         
         <form @submit.prevent="saveGeneral" class="space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="label">
-                Site Title
-              </label>
-              <input
-                v-model="generalSettings.siteTitle"
-                type="text"
-                class="input"
-                placeholder="My Awesome Blog"
-              />
-            </div>
-
-            <div>
-              <label class="label">
-                Site URL
-              </label>
-              <input
-                v-model="generalSettings.siteUrl"
-                type="url"
-                class="input"
-                placeholder="https://myblog.com"
-              />
-            </div>
+          <div>
+            <label class="label">
+              Site Title
+            </label>
+            <input
+              v-model="generalSettings.siteTitle"
+              type="text"
+              class="input"
+              placeholder="My Awesome Blog"
+            />
           </div>
 
           <div>
@@ -44,18 +42,6 @@
               class="input resize-none"
               placeholder="A brief description of your blog"
             />
-          </div>
-
-          <div>
-            <label class="label">
-              Language
-            </label>
-            <select v-model="generalSettings.language" class="input">
-              <option value="en">English</option>
-              <option value="vi">Tiếng Việt</option>
-              <option value="ja">日本語</option>
-              <option value="zh">中文</option>
-            </select>
           </div>
 
           <div class="flex justify-end">
@@ -196,54 +182,21 @@
         </form>
       </div>
 
-      <!-- Danger Zone -->
-      <div class="card border-red-200 dark:border-red-900">
-        <h2 class="text-xl font-bold text-red-600 dark:text-red-400 mb-6">Danger Zone</h2>
-        
-        <div class="space-y-4">
-          <div class="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/10 rounded-lg">
-            <div>
-              <h3 class="font-medium text-gray-900 dark:text-gray-100">Clear All Data</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Remove all posts, media, and settings</p>
-            </div>
-            <button
-              @click="clearAllData"
-              class="btn-danger"
-            >
-              Clear Data
-            </button>
-          </div>
-
-          <div class="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/10 rounded-lg">
-            <div>
-              <h3 class="font-medium text-gray-900 dark:text-gray-100">Logout</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Sign out of your account</p>
-            </div>
-            <button
-              @click="logout"
-              class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { mockAuthors } from '@/mock/data'
+import PromptDialog from '@/components/common/PromptDialog.vue'
+import { useToast } from '@/composables/useToast'
 
-const router = useRouter()
+const toast = useToast()
 
 const generalSettings = ref({
   siteTitle: 'My Blog',
-  siteUrl: 'https://myblog.com',
   siteDescription: 'A personal blog about technology and life',
-  language: 'en',
 })
 
 const appearanceSettings = ref({
@@ -255,6 +208,8 @@ const appearanceSettings = ref({
 const profileSettings = ref({
   ...mockAuthors[0]!,
 })
+
+const showAvatarPrompt = ref(false)
 
 const themes = [
   {
@@ -285,38 +240,33 @@ const themes = [
 
 const saveGeneral = () => {
   console.log('Saving general settings:', generalSettings.value)
-  alert('General settings saved!')
+  toast.success('General settings saved!')
 }
 
 const saveAppearance = () => {
   console.log('Saving appearance settings:', appearanceSettings.value)
-  alert('Appearance settings saved!')
+  toast.success('Appearance settings saved!')
 }
 
 const saveProfile = () => {
   console.log('Saving profile:', profileSettings.value)
-  alert('Profile updated!')
+  toast.success('Profile updated!')
 }
 
 const changeAvatar = () => {
-  const url = window.prompt('Enter avatar URL:')
-  if (url) {
-    profileSettings.value.avatar = url
-  }
+  showAvatarPrompt.value = true
 }
 
-const clearAllData = () => {
-  if (confirm('Are you sure? This will delete ALL data and cannot be undone!')) {
-    if (confirm('Really? This is your last chance!')) {
-      localStorage.clear()
-      alert('All data cleared!')
-      router.push('/login')
-    }
+const applyAvatarUrl = (url: string) => {
+  const value = url.trim()
+  if (!value) {
+    toast.warning('Avatar URL cannot be empty')
+    return
   }
+
+  profileSettings.value.avatar = value
+  showAvatarPrompt.value = false
+  toast.success('Avatar updated!')
 }
 
-const logout = () => {
-  localStorage.removeItem('isAuthenticated')
-  router.push('/login')
-}
 </script>

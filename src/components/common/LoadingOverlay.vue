@@ -10,9 +10,9 @@
     >
       <div 
         v-if="visible" 
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/55 backdrop-blur-sm"
       >
-        <div class="bg-white dark:bg-dark-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4 max-w-sm mx-4">
+        <div class="bg-stone-50 dark:bg-zinc-900 rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4 max-w-sm mx-4">
           <div class="relative">
             <div class="w-16 h-16 border-4 border-primary-200 dark:border-primary-900 rounded-full"></div>
             <div class="absolute inset-0 w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>

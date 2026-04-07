@@ -34,7 +34,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="card text-center py-12">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      <p class="mt-4 text-gray-600 dark:text-gray-400">Loading post...</p>
+      <p class="mt-4 text-dark-600 dark:text-dark-400">Loading post...</p>
     </div>
 
     <!-- Error State -->
@@ -59,14 +59,14 @@
       <div class="flex items-center gap-4 mb-6">
         <button
           @click="$router.back()"
-          class="p-2 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+          class="p-2 hover:bg-dark-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 class="text-2xl font-bold text-dark-900 dark:text-dark-100">
             {{ isNewPost ? 'Create New Post' : 'Edit Post' }}
           </h1>
           <!-- Change indicator -->
@@ -88,19 +88,19 @@
       >
         <div 
           v-if="showFloatingActions"
-          class="fixed bottom-8 right-8 z-50 flex items-center gap-3 bg-white dark:bg-dark-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-700 p-2"
+          class="fixed bottom-8 right-8 z-50 flex items-center gap-3 bg-dark-50 dark:bg-dark-900 rounded-2xl shadow-2xl border border-dark-300 dark:border-dark-700 p-2"
         >
           <!-- Save Draft Button -->
           <button
             @click="saveDraft"
-            class="px-4 py-2.5 rounded-xl font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-dark-700 hover:bg-gray-200 dark:hover:bg-dark-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2.5 rounded-xl font-medium text-dark-700 dark:text-dark-200 bg-dark-100 dark:bg-dark-700 hover:bg-dark-200 dark:hover:bg-dark-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="saving"
           >
             <span class="flex items-center gap-2">
               <svg v-if="!saving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
               </svg>
-              <div v-else class="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              <div v-else class="w-4 h-4 border-2 border-dark-400 border-t-transparent rounded-full animate-spin"></div>
               {{ saving ? 'Saving...' : 'Save Draft' }}
             </span>
           </button>
@@ -126,7 +126,7 @@
             @click="updatePost"
             class="px-5 py-2.5 rounded-xl font-medium text-white transition-all duration-200 shadow-lg disabled:cursor-not-allowed"
             :disabled="saving || !hasChanges"
-            :class="hasChanges ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/30' : 'bg-gray-400 dark:bg-dark-600 opacity-50'"
+            :class="hasChanges ? 'bg-primary-600 hover:bg-primary-700 shadow-primary-500/30' : 'bg-dark-400 dark:bg-dark-600 opacity-50'"
             :title="hasChanges ? 'Save your changes' : 'No changes to save'"
           >
             <span class="flex items-center gap-2">
@@ -148,7 +148,7 @@
             v-model="post.title"
             type="text"
             placeholder="Post Title"
-            class="w-full text-3xl font-bold bg-transparent border-none focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400"
+            class="w-full text-3xl font-bold bg-transparent border-none focus:outline-none text-dark-900 dark:text-dark-100 placeholder-dark-400"
           />
         </div>
 
@@ -158,7 +158,7 @@
             v-model="post.excerpt"
             rows="3"
             placeholder="Write a short excerpt..."
-            class="w-full bg-transparent border-none focus:outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 resize-none"
+            class="w-full bg-transparent border-none focus:outline-none text-dark-700 dark:text-dark-300 placeholder-dark-400 resize-none"
           />
         </div>
 
@@ -197,14 +197,14 @@
               @click="post.isFeatured = !post.isFeatured"
               :class="[
                 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                post.isFeatured ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+                post.isFeatured ? 'bg-primary-600' : 'bg-dark-200 dark:bg-dark-600'
               ]"
               role="switch"
               :aria-checked="post.isFeatured"
             >
               <span
                 :class="[
-                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-dark-50 shadow ring-0 transition duration-200 ease-in-out',
                   post.isFeatured ? 'translate-x-5' : 'translate-x-0'
                 ]"
               />
@@ -232,11 +232,11 @@
             </button>
           </div>
 
-          <div v-else class="border-2 border-dashed border-gray-300 dark:border-dark-600 rounded-lg p-8 text-center relative">
-            <div v-if="uploadingFeatured" class="absolute inset-0 bg-white/80 dark:bg-dark-800/80 flex items-center justify-center backdrop-blur-sm rounded-lg">
+          <div v-else class="border-2 border-dashed border-dark-300 dark:border-dark-600 rounded-lg p-8 text-center relative">
+            <div v-if="uploadingFeatured" class="absolute inset-0 bg-dark-50/80 dark:bg-dark-900/80 flex items-center justify-center backdrop-blur-sm rounded-lg">
               <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
             </div>
-            <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-12 h-12 mx-auto text-dark-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <button
@@ -246,7 +246,7 @@
             >
               {{ uploadingFeatured ? 'Uploading...' : 'Click to upload featured image' }}
             </button>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p class="text-xs text-dark-600 dark:text-dark-400 mt-2">
               Or drag and drop (JPEG, PNG, GIF, WebP • Max 5MB)
             </p>
           </div>
@@ -333,7 +333,7 @@
             <div>
               <label class="block text-xs text-muted mb-1">
                 Meta Title
-                <span class="text-gray-400">({{ post.metaTitle?.length || 0 }}/255)</span>
+                <span class="text-dark-400">({{ post.metaTitle?.length || 0 }}/255)</span>
               </label>
               <input
                 v-model="post.metaTitle"
@@ -348,7 +348,7 @@
             <div>
               <label class="block text-xs text-muted mb-1">
                 Meta Description
-                <span class="text-gray-400">({{ post.metaDescription?.length || 0 }}/320)</span>
+                <span class="text-dark-400">({{ post.metaDescription?.length || 0 }}/320)</span>
               </label>
               <textarea
                 v-model="post.metaDescription"
@@ -361,7 +361,7 @@
             </div>
             
             <div>
-              <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Reading Time (min)</label>
+              <label class="block text-xs text-dark-600 dark:text-dark-400 mb-1">Reading Time (min)</label>
               <input
                 v-model.number="post.readingTime"
                 type="number"

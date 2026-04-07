@@ -5,26 +5,26 @@
 
 @layer base {
   * {
-    @apply border-zinc-300 dark:border-zinc-800;
+    @apply border-dark-300 dark:border-dark-800;
   }
   
   body {
-    @apply bg-stone-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200;
+    @apply bg-dark-50 dark:bg-dark-950 text-dark-900 dark:text-dark-200 transition-colors duration-200;
   }
 }
 
 @layer components {
   /* ===== BUTTONS ===== */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-none text-sm font-medium tracking-wide uppercase transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-100 dark:focus-visible:ring-offset-zinc-950;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-none text-sm font-medium tracking-wide uppercase transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-50 dark:focus-visible:ring-offset-dark-950;
   }
   
   .btn-primary {
-    @apply btn bg-zinc-900 text-primary-200 border-zinc-900 hover:bg-zinc-800 dark:bg-primary-500 dark:text-zinc-950 dark:border-primary-500 dark:hover:bg-primary-400;
+    @apply btn bg-dark-900 text-primary-200 border-dark-900 hover:bg-dark-800 dark:bg-primary-500 dark:text-dark-950 dark:border-primary-500 dark:hover:bg-primary-400;
   }
   
   .btn-secondary {
-    @apply btn bg-stone-100 text-zinc-800 border-zinc-400 hover:bg-stone-200 dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800;
+    @apply btn bg-dark-50 text-dark-800 border-dark-300 hover:bg-dark-100 dark:bg-dark-900 dark:text-dark-100 dark:border-dark-700 dark:hover:bg-dark-800;
   }
   
   .btn-danger {
@@ -32,29 +32,29 @@
   }
   
   .btn-ghost {
-    @apply btn bg-transparent text-zinc-700 border-transparent hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-900;
+    @apply btn bg-transparent text-dark-700 border-transparent hover:bg-dark-200 dark:text-dark-300 dark:hover:bg-dark-900;
   }
   
   .btn-icon {
-    @apply p-2 border border-zinc-400 text-zinc-600 bg-stone-100 hover:bg-stone-200 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors;
+    @apply p-2 border border-dark-300 text-dark-600 bg-dark-50 hover:bg-dark-100 dark:bg-dark-900 dark:border-dark-700 dark:text-dark-300 dark:hover:bg-dark-800 transition-colors;
   }
   
   .btn-icon-sm {
-    @apply p-1.5 border border-zinc-300 text-zinc-600 bg-stone-50 hover:bg-stone-200 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors;
+    @apply p-1.5 border border-dark-300 text-dark-600 bg-dark-50 hover:bg-dark-100 dark:bg-dark-900 dark:border-dark-700 dark:text-dark-300 dark:hover:bg-dark-800 transition-colors;
   }
   
   /* ===== CARDS ===== */
   .card {
-    @apply bg-stone-50 dark:bg-zinc-900 border border-zinc-400 dark:border-zinc-800 rounded-none p-5;
+    @apply bg-dark-50 dark:bg-dark-900 border border-dark-300 dark:border-dark-800 rounded-none p-5;
   }
   
   .card-hover {
-    @apply card hover:border-zinc-600 dark:hover:border-zinc-600 transition-colors cursor-pointer;
+    @apply card hover:border-dark-600 dark:hover:border-dark-600 transition-colors cursor-pointer;
   }
   
   /* ===== FORM ELEMENTS ===== */
   .input {
-    @apply w-full px-3 py-2 border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-600 dark:focus:border-primary-500 transition-colors;
+    @apply w-full px-3 py-2 border border-dark-300 dark:border-dark-700 bg-dark-50 dark:bg-dark-900 text-dark-900 dark:text-dark-100 rounded-none focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-600 dark:focus:border-primary-500 transition-colors;
   }
   
   .input-sm {
@@ -62,7 +62,7 @@
   }
   
   .label {
-    @apply block text-xs font-semibold uppercase tracking-[0.08em] text-zinc-700 dark:text-zinc-300 mb-1;
+    @apply block text-xs font-semibold uppercase tracking-[0.08em] text-dark-700 dark:text-dark-300 mb-1;
   }
   
   /* Hide native select arrow for custom dropdown styling */
@@ -83,70 +83,70 @@
   }
   
   .badge-primary {
-    @apply badge bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/50;
+    @apply badge bg-dark-100 text-dark-800 border-dark-300 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-700/50;
   }
   
   .badge-success {
-    @apply badge bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-700/50;
+    @apply badge bg-dark-100 text-dark-800 border-dark-300 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-700/50;
   }
   
   .badge-warning {
-    @apply badge bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/50;
+    @apply badge bg-dark-100 text-dark-800 border-dark-300 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-700/50;
   }
   
   .badge-danger {
-    @apply badge bg-red-50 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700/50;
+    @apply badge bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700/50;
   }
   
   .badge-purple {
-    @apply badge bg-cyan-50 text-cyan-800 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-300 dark:border-cyan-700/50;
+    @apply badge bg-dark-100 text-dark-800 border-dark-300 dark:bg-dark-900 dark:text-dark-300 dark:border-dark-700/50;
   }
   
   .badge-gray {
-    @apply badge bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700;
+    @apply badge bg-dark-100 text-dark-700 border-dark-300 dark:bg-dark-900 dark:text-dark-300 dark:border-dark-700;
   }
   
   /* ===== TABLE ===== */
   .table-header {
-    @apply px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.08em];
+    @apply px-4 py-3 text-left text-[11px] font-semibold text-dark-600 dark:text-dark-400 uppercase tracking-[0.08em];
   }
   
   .table-cell {
-    @apply px-4 py-3 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100;
+    @apply px-4 py-3 whitespace-nowrap text-sm text-dark-900 dark:text-dark-100;
   }
   
   .table-row {
-    @apply hover:bg-zinc-100 dark:hover:bg-zinc-900/60 transition-colors;
+    @apply hover:bg-dark-100 dark:hover:bg-dark-900/60 transition-colors;
   }
   
   /* ===== TYPOGRAPHY ===== */
   .text-muted {
-    @apply text-zinc-500 dark:text-zinc-400;
+    @apply text-dark-600 dark:text-dark-400;
   }
   
   .text-heading {
-    @apply text-zinc-900 dark:text-zinc-100 font-semibold tracking-tight;
+    @apply text-dark-900 dark:text-dark-100 font-semibold tracking-tight;
   }
   
   .page-title {
-    @apply font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-[0.08em];
+    @apply font-bold text-dark-900 dark:text-dark-100 uppercase tracking-[0.08em];
   }
   
   .section-title {
-    @apply text-xs font-semibold uppercase tracking-[0.08em] text-zinc-800 dark:text-zinc-200;
+    @apply text-xs font-semibold uppercase tracking-[0.08em] text-dark-800 dark:text-dark-200;
   }
   
   .form-hint {
-    @apply text-xs text-zinc-500 dark:text-zinc-400 mt-1;
+    @apply text-xs text-dark-600 dark:text-dark-400 mt-1;
   }
   
   /* ===== LAYOUT ===== */
   .divider {
-    @apply border-t border-zinc-300 dark:border-zinc-800;
+    @apply border-t border-dark-300 dark:border-dark-800;
   }
   
   .section {
-    @apply bg-stone-50 dark:bg-zinc-900 border border-zinc-400 dark:border-zinc-800 rounded-none;
+    @apply bg-dark-50 dark:bg-dark-900 border border-dark-300 dark:border-dark-800 rounded-none;
   }
 }
 
@@ -156,23 +156,23 @@
 }
 
 .Vue-Toastification__toast--default {
-  @apply bg-stone-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-400 dark:border-zinc-800;
+  @apply bg-dark-100 dark:bg-dark-900 text-dark-900 dark:text-dark-100 border-dark-300 dark:border-dark-800;
 }
 
 .Vue-Toastification__toast--success {
-  @apply bg-stone-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-l-4 border-l-primary-500 border-zinc-400 dark:border-zinc-800;
+  @apply bg-dark-100 dark:bg-dark-900 text-dark-900 dark:text-dark-100 border-l-4 border-l-primary-500 border-dark-300 dark:border-dark-800;
 }
 
 .Vue-Toastification__toast--error {
-  @apply bg-stone-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-l-4 border-l-red-500 border-zinc-400 dark:border-zinc-800;
+  @apply bg-dark-100 dark:bg-dark-900 text-dark-900 dark:text-dark-100 border-l-4 border-l-red-500 border-dark-300 dark:border-dark-800;
 }
 
 .Vue-Toastification__toast--warning {
-  @apply bg-stone-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-l-4 border-l-amber-500 border-zinc-400 dark:border-zinc-800;
+  @apply bg-dark-100 dark:bg-dark-900 text-dark-900 dark:text-dark-100 border-l-4 border-l-amber-500 border-dark-300 dark:border-dark-800;
 }
 
 .Vue-Toastification__toast--info {
-  @apply bg-stone-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-l-4 border-l-primary-500 border-zinc-400 dark:border-zinc-800;
+  @apply bg-dark-100 dark:bg-dark-900 text-dark-900 dark:text-dark-100 border-l-4 border-l-primary-500 border-dark-300 dark:border-dark-800;
 }
 
 .Vue-Toastification__toast-body {
@@ -200,7 +200,7 @@
 }
 
 .Vue-Toastification__close-button {
-  @apply text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100 transition-colors;
+  @apply text-dark-500 hover:text-dark-700 dark:hover:text-dark-100 transition-colors;
 }
 
 .Vue-Toastification__icon {
@@ -230,6 +230,54 @@
 
 :root:not(.dark) .bg-stone-50 {
   background-color: #f9f5d7;
+}
+
+:root:not(.dark) .bg-white {
+  background-color: #fbf1c7;
+}
+
+:root:not(.dark) .bg-white\/80 {
+  background-color: rgb(251 241 199 / 0.8);
+}
+
+:root:not(.dark) .bg-gray-50 {
+  background-color: #f9f5d7;
+}
+
+:root:not(.dark) .bg-gray-100 {
+  background-color: #f2e5bc;
+}
+
+:root:not(.dark) .bg-gray-200 {
+  background-color: #ebdbb2;
+}
+
+:root:not(.dark) .bg-gray-300 {
+  background-color: #d5c4a1;
+}
+
+:root:not(.dark) .bg-gray-400 {
+  background-color: #bdae93;
+}
+
+:root:not(.dark) .bg-gray-500 {
+  background-color: #a89984;
+}
+
+:root:not(.dark) .bg-gray-600 {
+  background-color: #928374;
+}
+
+:root:not(.dark) .bg-gray-700 {
+  background-color: #665c54;
+}
+
+:root:not(.dark) .bg-gray-800 {
+  background-color: #504945;
+}
+
+:root:not(.dark) .bg-gray-900 {
+  background-color: #3c3836;
 }
 
 :root:not(.dark) .bg-zinc-100 {
@@ -264,6 +312,30 @@
   color: #928374;
 }
 
+:root:not(.dark) .text-gray-400 {
+  color: #bdae93;
+}
+
+:root:not(.dark) .text-gray-500 {
+  color: #928374;
+}
+
+:root:not(.dark) .text-gray-600 {
+  color: #7c6f64;
+}
+
+:root:not(.dark) .text-gray-700 {
+  color: #665c54;
+}
+
+:root:not(.dark) .text-gray-800 {
+  color: #504945;
+}
+
+:root:not(.dark) .text-gray-900 {
+  color: #3c3836;
+}
+
 :root:not(.dark) .border-zinc-900 {
   border-color: #3c3836;
 }
@@ -274,6 +346,26 @@
 
 :root:not(.dark) .border-zinc-300 {
   border-color: #d5c4a1;
+}
+
+:root:not(.dark) .border-gray-100 {
+  border-color: #f2e5bc;
+}
+
+:root:not(.dark) .border-gray-200 {
+  border-color: #ebdbb2;
+}
+
+:root:not(.dark) .border-gray-300 {
+  border-color: #d5c4a1;
+}
+
+:root:not(.dark) .border-gray-400 {
+  border-color: #bdae93;
+}
+
+:root:not(.dark) .border-gray-500 {
+  border-color: #a89984;
 }
 
 :root:not(.dark) .text-emerald-300 {
@@ -290,6 +382,26 @@
 
 :root:not(.dark) .hover\:bg-stone-200:hover {
   background-color: #ebdbb2;
+}
+
+:root:not(.dark) .hover\:bg-gray-50:hover {
+  background-color: #f9f5d7;
+}
+
+:root:not(.dark) .hover\:bg-gray-100:hover {
+  background-color: #f2e5bc;
+}
+
+:root:not(.dark) .hover\:bg-gray-200:hover {
+  background-color: #ebdbb2;
+}
+
+:root:not(.dark) .hover\:bg-gray-300:hover {
+  background-color: #d5c4a1;
+}
+
+:root:not(.dark) .hover\:bg-gray-700:hover {
+  background-color: #665c54;
 }
 
 :root:not(.dark) .hover\:bg-zinc-100:hover {

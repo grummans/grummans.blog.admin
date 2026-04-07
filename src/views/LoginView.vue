@@ -17,17 +17,17 @@
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Email -->
           <div>
-            <label for="email" class="label">
-              Email
+            <label for="username" class="label">
+              Username
             </label>
             <input
-              id="email"
-              v-model="loginForm.email"
-              type="email"
+              id="username"
+              v-model="loginForm.username"
+              type="text"
               required
-              autocomplete="email"
+              autocomplete="username"
               class="input"
-              placeholder="admin@blog.com"
+              placeholder="grummans"
             />
           </div>
 
@@ -62,21 +62,6 @@
             </div>
           </div>
 
-          <!-- Remember Me & Forgot Password -->
-          <div class="flex items-center justify-between">
-            <label class="flex items-center">
-              <input
-                v-model="loginForm.remember"
-                type="checkbox"
-                class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-dark-600 dark:bg-dark-700"
-              />
-              <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Remember me</span>
-            </label>
-            <a href="#" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
-              Forgot password?
-            </a>
-          </div>
-
           <!-- Submit Button -->
           <button
             type="submit"
@@ -92,18 +77,12 @@
               Signing in...
             </span>
           </button>
+
+          <p v-if="errorMessage" class="text-sm text-red-600 dark:text-red-400">
+            {{ errorMessage }}
+          </p>
         </form>
 
-        <!-- Demo Credentials -->
-        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p class="text-sm text-blue-800 dark:text-blue-300 font-medium mb-2">
-            🔐 Demo Credentials:
-          </p>
-          <p class="text-xs text-blue-700 dark:text-blue-400">
-            Email: <code class="bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded">admin@blog.com</code><br/>
-            Password: <code class="bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded">admin123</code>
-          </p>
-        </div>
       </div>
 
       <!-- Dark Mode Toggle -->
@@ -127,32 +106,49 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDarkMode } from '@/composables/useDarkMode'
+import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const { isDark, toggleDarkMode } = useDarkMode()
+const authStore = useAuthStore()
+const { error: showError } = useToast()
 
 const loginForm = ref({
-  email: '',
+  username: '',
   password: '',
-  remember: false,
 })
 
 const showPassword = ref(false)
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 const handleLogin = async () => {
+  errorMessage.value = ''
   isLoading.value = true
 
-  // Simulate API call
-  setTimeout(() => {
-    // Mock authentication - accept any credentials for demo
-    if (loginForm.value.email && loginForm.value.password) {
-      localStorage.setItem('isAuthenticated', 'true')
-      router.push('/')
-    }
+  try {
+    await authStore.login({
+      username: loginForm.value.username,
+      password: loginForm.value.password,
+    })
+
+    const redirect = Array.isArray(route.query.redirect)
+      ? route.query.redirect[0]
+      : route.query.redirect
+
+    await router.replace(typeof redirect === 'string' && redirect ? redirect : '/dashboard')
+  } catch (error: any) {
+    const isInvalidCredentials = error?.response?.status === 401
+    errorMessage.value = isInvalidCredentials
+      ? 'Invalid username or password.'
+      : error?.message || 'Unable to sign in. Please try again.'
+    showError(errorMessage.value)
+  } finally {
     isLoading.value = false
-  }, 1000)
+  }
 }
 </script>

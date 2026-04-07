@@ -94,11 +94,11 @@
     <!-- Create/Edit Modal -->
     <div
       v-if="showModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/55"
       @click="showModal = false"
     >
       <div
-        class="bg-white dark:bg-dark-800 rounded-lg max-w-md w-full p-6"
+        class="bg-stone-50 dark:bg-zinc-900 rounded-lg max-w-md w-full p-6"
         @click.stop
       >
         <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">

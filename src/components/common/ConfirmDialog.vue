@@ -10,7 +10,7 @@
     >
       <div 
         v-if="visible" 
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/55 backdrop-blur-sm"
         @click.self="onCancel"
       >
         <Transition
@@ -23,7 +23,7 @@
         >
           <div 
             v-if="visible"
-            class="bg-white dark:bg-dark-800 rounded-2xl p-6 shadow-2xl max-w-md mx-4 w-full"
+            class="bg-stone-50 dark:bg-zinc-900 rounded-2xl p-6 shadow-2xl max-w-md mx-4 w-full"
           >
             <!-- Icon -->
             <div 

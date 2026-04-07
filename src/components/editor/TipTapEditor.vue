@@ -1,5 +1,17 @@
 <template>
   <div class="tiptap-editor">
+    <PromptDialog
+      :visible="showLinkPrompt"
+      title="Add Link"
+      message="Paste or type the URL for this link"
+      placeholder="https://example.com"
+      :initial-value="pendingLinkUrl"
+      confirm-text="Apply"
+      cancel-text="Cancel"
+      @confirm="applyLink"
+      @cancel="showLinkPrompt = false"
+    />
+
     <!-- Toolbar -->
     <div v-if="editor" class="editor-toolbar">
       <!-- Text Formatting -->
@@ -200,17 +212,17 @@
       <editor-content :editor="editor" class="editor-content" />
       
       <!-- Upload indicator -->
-      <div v-if="uploading" class="absolute inset-0 bg-white/80 dark:bg-dark-800/80 flex items-center justify-center backdrop-blur-sm">
+      <div v-if="uploading" class="absolute inset-0 bg-dark-50/80 dark:bg-dark-900/80 flex items-center justify-center backdrop-blur-sm">
         <div class="text-center">
           <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-2"></div>
-          <p class="text-sm text-gray-600 dark:text-gray-400">Uploading file...</p>
+          <p class="text-sm text-dark-600 dark:text-dark-400">Uploading file...</p>
         </div>
       </div>
     </div>
 
     <!-- Character Count -->
     <div v-if="editor" class="editor-footer">
-      <span class="text-xs text-gray-500 dark:text-gray-400">
+      <span class="text-xs text-dark-600 dark:text-dark-400">
         {{ editor.storage.characterCount.characters() }} characters
         • {{ editor.storage.characterCount.words() }} words
       </span>
@@ -227,6 +239,8 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import CharacterCount from '@tiptap/extension-character-count'
 import { mediaService } from '@/services/mediaService'
+import PromptDialog from '@/components/common/PromptDialog.vue'
+import { useToast } from '@/composables/useToast'
 
 interface Props {
   modelValue: string
@@ -241,8 +255,12 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
 }>()
 
+const toast = useToast()
+
 const uploading = ref(false)
 const uploadProgress = ref(0)
+const showLinkPrompt = ref(false)
+const pendingLinkUrl = ref('')
 
 const editor = useEditor({
   content: props.modelValue,
@@ -318,16 +336,21 @@ watch(() => props.modelValue, (value) => {
 // Link functions
 const setLink = () => {
   const previousUrl = editor.value?.getAttributes('link').href
-  const url = window.prompt('Enter URL:', previousUrl)
+  pendingLinkUrl.value = previousUrl ?? ''
+  showLinkPrompt.value = true
+}
 
-  if (url === null) return
+const applyLink = (url: string) => {
+  const value = url.trim()
 
-  if (url === '') {
+  if (!value) {
     editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
+    showLinkPrompt.value = false
     return
   }
 
-  editor.value?.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+  editor.value?.chain().focus().extendMarkRange('link').setLink({ href: value }).run()
+  showLinkPrompt.value = false
 }
 
 // Upload and insert image
@@ -335,7 +358,7 @@ const uploadAndInsertImage = async (file: File, pos?: number) => {
   // Validate image
   const validation = mediaService.validateImage(file)
   if (!validation.valid) {
-    alert(validation.error)
+    toast.error(validation.error || 'Invalid image file')
     return
   }
 
@@ -359,7 +382,7 @@ const uploadAndInsertImage = async (file: File, pos?: number) => {
     }
   } catch (error: any) {
     console.error('Image upload failed:', error)
-    alert(error.message || 'Failed to upload image')
+    toast.error(error.message || 'Failed to upload image')
   } finally {
     uploading.value = false
     uploadProgress.value = 0
@@ -371,7 +394,7 @@ const uploadAndInsertFile = async (file: File, pos?: number) => {
   // Validate file
   const validation = mediaService.validateFile(file)
   if (!validation.valid) {
-    alert(validation.error)
+    toast.error(validation.error || 'Invalid file')
     return
   }
 
@@ -398,7 +421,7 @@ const uploadAndInsertFile = async (file: File, pos?: number) => {
     }
   } catch (error: any) {
     console.error('File upload failed:', error)
-    alert(error.message || 'Failed to upload file')
+    toast.error(error.message || 'Failed to upload file')
   } finally {
     uploading.value = false
     uploadProgress.value = 0
@@ -458,11 +481,11 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .tiptap-editor {
-  @apply border border-gray-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-800 overflow-hidden;
+  @apply border border-dark-300 dark:border-dark-700 rounded-lg bg-dark-50 dark:bg-dark-900 overflow-hidden;
 }
 
 .editor-toolbar {
-  @apply flex items-center gap-1 p-2 border-b border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-900 flex-wrap;
+  @apply flex items-center gap-1 p-2 border-b border-dark-300 dark:border-dark-700 bg-dark-100 dark:bg-dark-900 flex-wrap;
 }
 
 .toolbar-group {
@@ -470,11 +493,11 @@ onBeforeUnmount(() => {
 }
 
 .toolbar-divider {
-  @apply w-px h-6 bg-gray-300 dark:bg-dark-600 mx-1;
+  @apply w-px h-6 bg-dark-300 dark:bg-dark-600 mx-1;
 }
 
 .toolbar-btn {
-  @apply px-2 py-1.5 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 transition-colors font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply px-2 py-1.5 rounded text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-700 transition-colors font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .toolbar-btn.is-active {
@@ -482,11 +505,11 @@ onBeforeUnmount(() => {
 }
 
 .editor-content {
-  @apply bg-white dark:bg-dark-800;
+  @apply bg-dark-50 dark:bg-dark-900;
 }
 
 .editor-footer {
-  @apply px-4 py-2 border-t border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-900;
+  @apply px-4 py-2 border-t border-dark-300 dark:border-dark-700 bg-dark-100 dark:bg-dark-900;
 }
 
 /* TipTap prose styling */
@@ -495,7 +518,7 @@ onBeforeUnmount(() => {
 }
 
 :deep(.ProseMirror p.is-editor-empty:first-child::before) {
-  @apply text-gray-400 dark:text-gray-500;
+  @apply text-dark-500 dark:text-dark-500;
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -507,11 +530,11 @@ onBeforeUnmount(() => {
 }
 
 :deep(.ProseMirror code) {
-  @apply bg-gray-100 dark:bg-dark-700 px-1.5 py-0.5 rounded text-sm;
+  @apply bg-dark-100 dark:bg-dark-700 px-1.5 py-0.5 rounded text-sm;
 }
 
 :deep(.ProseMirror pre) {
-  @apply bg-gray-900 dark:bg-black text-gray-100 p-4 rounded-lg overflow-x-auto;
+  @apply bg-zinc-900 dark:bg-zinc-950 text-stone-100 p-4 rounded-lg overflow-x-auto;
 }
 
 :deep(.ProseMirror pre code) {
@@ -519,10 +542,10 @@ onBeforeUnmount(() => {
 }
 
 :deep(.ProseMirror blockquote) {
-  @apply border-l-4 border-gray-300 dark:border-dark-600 pl-4 italic text-gray-700 dark:text-gray-300;
+  @apply border-l-4 border-dark-300 dark:border-dark-600 pl-4 italic text-dark-700 dark:text-dark-300;
 }
 
 :deep(.ProseMirror a.file-link) {
-  @apply inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-dark-700 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors no-underline text-gray-900 dark:text-gray-100;
+  @apply inline-flex items-center gap-2 px-3 py-2 bg-dark-100 dark:bg-dark-700 rounded-lg hover:bg-dark-200 dark:hover:bg-dark-600 transition-colors no-underline text-dark-900 dark:text-dark-100;
 }
 </style>
