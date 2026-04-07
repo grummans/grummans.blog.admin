@@ -17,12 +17,12 @@
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Email -->
           <div>
-            <label for="email" class="label">
+            <label for="username" class="label">
               Username
             </label>
             <input
-              id="email"
-              v-model="loginForm.email"
+              id="username"
+              v-model="loginForm.username"
               type="text"
               required
               autocomplete="username"
@@ -77,6 +77,10 @@
               Signing in...
             </span>
           </button>
+
+          <p v-if="errorMessage" class="text-sm text-red-600 dark:text-red-400">
+            {{ errorMessage }}
+          </p>
         </form>
 
       </div>
@@ -102,31 +106,49 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDarkMode } from '@/composables/useDarkMode'
+import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const route = useRoute()
 const { isDark, toggleDarkMode } = useDarkMode()
+const authStore = useAuthStore()
+const { error: showError } = useToast()
 
 const loginForm = ref({
-  email: '',
+  username: '',
   password: '',
 })
 
 const showPassword = ref(false)
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 const handleLogin = async () => {
+  errorMessage.value = ''
   isLoading.value = true
 
-  // Simulate API call
-  setTimeout(() => {
-    // Mock authentication - accept any credentials for demo
-    if (loginForm.value.email && loginForm.value.password) {
-      localStorage.setItem('isAuthenticated', 'true')
-      router.push('/')
-    }
+  try {
+    await authStore.login({
+      username: loginForm.value.username,
+      password: loginForm.value.password,
+    })
+
+    const redirect = Array.isArray(route.query.redirect)
+      ? route.query.redirect[0]
+      : route.query.redirect
+
+    await router.replace(typeof redirect === 'string' && redirect ? redirect : '/dashboard')
+  } catch (error: any) {
+    const isInvalidCredentials = error?.response?.status === 401
+    errorMessage.value = isInvalidCredentials
+      ? 'Invalid username or password.'
+      : error?.message || 'Unable to sign in. Please try again.'
+    showError(errorMessage.value)
+  } finally {
     isLoading.value = false
-  }, 1000)
+  }
 }
 </script>

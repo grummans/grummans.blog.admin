@@ -55,13 +55,13 @@
             class="flex items-center w-full hover:bg-dark-100 dark:hover:bg-dark-800 p-2 border border-dark-300 dark:border-dark-700 transition-colors"
           >
             <img
-              :src="currentUser.avatar"
-              :alt="currentUser.name"
+              :src="currentUser.avatarUrl"
+              :alt="currentUser.displayName"
               class="w-9 h-9 border border-dark-300 dark:border-dark-600"
             />
             <div class="ml-3 flex-1 min-w-0 text-left">
               <p class="text-xs font-semibold uppercase tracking-wide text-dark-900 dark:text-dark-100 truncate">
-                {{ currentUser.name }}
+                {{ currentUser.displayName }}
               </p>
               <p class="text-[11px] text-dark-600 dark:text-dark-400 truncate">
                 {{ currentUser.email }}
@@ -201,18 +201,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '@/composables/useDarkMode'
-import { mockAuthors } from '@/mock/data'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const { isDark, toggleDarkMode } = useDarkMode()
+const authStore = useAuthStore()
 const isSidebarOpen = ref(false)
 const isUserMenuOpen = ref(false)
 const showLogoutConfirm = ref(false)
-const currentUser = mockAuthors[0]!
+
+const currentUser = computed(() => {
+  return {
+    avatarUrl: 'https://ui-avatars.com/api/?name=Admin+User&background=0ea5e9&color=fff',
+    displayName: authStore.isAuthenticated ? 'Admin User' : 'Guest',
+    email: authStore.isAuthenticated ? 'admin@blog.com' : 'login required',
+  }
+})
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
@@ -223,10 +231,14 @@ const handleLogout = () => {
   showLogoutConfirm.value = true
 }
 
-const confirmLogout = () => {
+const confirmLogout = async () => {
   showLogoutConfirm.value = false
-  localStorage.removeItem('isAuthenticated')
-  router.push('/login')
+
+  try {
+    await authStore.logout()
+  } finally {
+    await router.replace('/login')
+  }
 }
 
 // Navigation items

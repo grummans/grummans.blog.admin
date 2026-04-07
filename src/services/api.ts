@@ -8,19 +8,12 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: false,
+  withCredentials: true,
 })
 
 // Request interceptor
 apiClient.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem('authToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
+  (config) => config,
   (error) => {
     return Promise.reject(error)
   }
@@ -54,9 +47,13 @@ apiClient.interceptors.response.use(
         error.message = apiResponse.message || 'An error occurred'
       }
       
-      // Handle 401 Unauthorized
-      if (error.response.status === 401) {
-        localStorage.removeItem('authToken')
+      // Handle 401 Unauthorized for protected API calls.
+      // Keep login failures and session checks in place so the UI can respond.
+      const requestUrl = error.config?.url || ''
+      const isLoginRequest = requestUrl.includes('/auth/login')
+      const isSessionCheckRequest = requestUrl.includes('/auth/me')
+
+      if (error.response.status === 401 && !isLoginRequest && !isSessionCheckRequest) {
         window.location.href = '/login'
       }
     } else if (error.request) {
