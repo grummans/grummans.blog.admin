@@ -154,5 +154,3 @@ This is a personal project but suggestions are welcome!
 MIT License
 
 ---
-
-**Built with ❤️ using Vue 3 + Tailwind CSS**
