@@ -164,7 +164,7 @@
 
         <!-- Editor -->
         <div class="card p-0">
-          <TipTapEditor
+          <MdEditorWrapper
             v-model="post.content"
             placeholder="Tell your story..."
           />
@@ -380,7 +380,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import TipTapEditor from '@/components/editor/TipTapEditor.vue'
+import MdEditorWrapper from '@/components/editor/MdEditorWrapper.vue'
 import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import AttachmentList from '@/components/common/AttachmentList.vue'
