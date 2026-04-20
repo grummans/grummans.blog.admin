@@ -530,3 +530,39 @@
 .dark .dark\:hover\:bg-red-900\/20:hover {
   background-color: rgb(251 73 52 / 0.18);
 }
+
+/* Gruvbox Theme Customization for md-editor-v3 (Light Mode) */
+:root:not(.dark) .md-editor {
+  --md-bk-color: #fbf1c7 !important; /* dark-50 */
+  --md-bk-color-outstand: #f2e5bc !important; /* dark-100 */
+  --md-color: #3c3836 !important; /* dark-900 */
+  --md-border-color: #d5c4a1 !important; /* dark-300 */
+  --md-border-hover-color: #a89984 !important; /* dark-500 */
+  --md-border-active-color: #b57614 !important; /* primary-600 */
+  --md-theme-color: #b57614 !important; /* primary-600 */
+  
+  --md-theme-bg-color: #fbf1c7 !important; /* dark-50 */
+  --md-theme-bg-color-inset: #f2e5bc !important; /* dark-100 */
+  --md-theme-border-color: #d5c4a1 !important; /* dark-300 */
+  --md-theme-border-color-inset: #bdae93 !important; /* dark-400 */
+  --md-theme-color-hover: #b57614 !important;
+  --md-theme-link-color: #b57614 !important;
+}
+
+/* Gruvbox Theme Customization for md-editor-v3 (Dark Mode) */
+.dark .md-editor, .md-editor-dark {
+  --md-bk-color: #1d2021 !important; /* dark-950 */
+  --md-bk-color-outstand: #3c3836 !important; /* dark-900 */
+  --md-color: #ebdbb2 !important; /* dark-200 */
+  --md-border-color: #504945 !important; /* dark-800 */
+  --md-border-hover-color: #928374 !important; /* dark-600 */
+  --md-border-active-color: #d79921 !important; /* primary-500 */
+  --md-theme-color: #d79921 !important; /* primary-500 */
+  
+  --md-theme-bg-color: #1d2021 !important; /* dark-950 */
+  --md-theme-bg-color-inset: #3c3836 !important; /* dark-900 */
+  --md-theme-border-color: #504945 !important; /* dark-800 */
+  --md-theme-border-color-inset: #665c54 !important; /* dark-700 */
+  --md-theme-color-hover: #d79921 !important;
+  --md-theme-link-color: #d79921 !important;
+}

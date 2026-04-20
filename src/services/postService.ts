@@ -8,7 +8,6 @@ export interface PostApiResponse {
   title: string
   excerpt: string
   content?: string
-  contentHtml?: string  // HTML content for TipTap editor
   viewCount: number
   readingTimeMinutes: number
   updatedAt: string
@@ -102,7 +101,7 @@ function mapApiResponseToPost(apiPost: PostApiResponse | null): Post | null {
     id: String(apiPost.id || 0),
     title: apiPost.title || '',
     slug: apiPost.slug || '',
-    content: apiPost.contentHtml || apiPost.content || '',  // Prefer contentHtml for TipTap editor
+    content: apiPost.content || '',  
     excerpt: apiPost.excerpt || '',
     featuredImage: apiPost.featuredImageUrl || null,
     status,
