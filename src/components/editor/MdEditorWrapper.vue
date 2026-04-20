@@ -73,7 +73,10 @@ const onUploadImg = async (files: File[], callback: (urls: string[]) => void) =>
         return ''
       }
       try {
-        const url = await mediaService.upload(file)
+        let url = await mediaService.upload(file)
+        if (url.startsWith('minioconsole.grummans.me')) {
+          url = 'https://' + url
+        }
         return url
       } catch (error: any) {
         toast.error(error.message || 'Failed to upload image')
